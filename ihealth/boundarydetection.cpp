@@ -15,6 +15,7 @@
 
 #define PullLimit 4.0 /*实际电压需要除以2*/
 
+
 // 这个回调函数是为了改变MessageBox中Text的默认内容                    
 HHOOK   hHook;
 LRESULT   __stdcall   CBTHookProc(long   nCode, WPARAM   wParam, LPARAM   lParam) {
@@ -292,8 +293,7 @@ void boundaryDetection::check() {
 		// 同样需要先把动作暂停下来
 		::PostMessage(m_hWnd, PullForceError, NULL, NULL);
 
-
-		wstring msg(_T("钢丝绳拉力超出许可范围，请检查异常并联系制造商,F1="));
+		wstring msg(_T("钢丝绳拉力超出许可范围，请检查患者是否痉挛或设备是否异常,F1="));
 		msg += to_wstring(abs_shoulder_forward_pull);
 		msg += (_T(", F2="));
 		msg += to_wstring(abs_shoulder_backward_pull);
