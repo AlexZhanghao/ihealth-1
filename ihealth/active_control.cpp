@@ -266,11 +266,6 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	Pos(0, 0) = angle[0];
 	Pos(1, 0) = angle[1];
 
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
-	//printf("elbow angle: %lf\n", angle[1]);
-	//printf("shoulder angle: %lf\n", angle[0]);
-	//printf("fx:%lf    fy:%lf    fz:%lf \n Mx:%lf    My:%lf    Mz:%lf \n", FiltedData[3], FiltedData[4], FiltedData[5], FiltedData[0], FiltedData[1], FiltedData[2]);
 	
 	for (int i = 0; i < 6; i++)
 	{
@@ -349,7 +344,7 @@ bool activecontrol::isFire()
 	double grip;
 	//这里就是采集握力的数据
 	DataAcquisition::GetInstance().AcquisiteGripData(&grip);
-	if (grip > 0.3)
+	if (grip > 0.15)
 		fireOrNot = true;
 	return fireOrNot;
 }
