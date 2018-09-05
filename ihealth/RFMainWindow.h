@@ -62,6 +62,8 @@ public:
 	LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);	
 	LRESULT MessageHandler(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bHandled);
 	LRESULT OnEmgSampleData(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnTorqueError(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnPullForceError(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 public:
 	bool		OnLogin(void *pParam);
@@ -206,6 +208,7 @@ public:
 
 	static int	OnSearchOK(EventArg *pArg);
 	static int  OnFilterOK(EventArg* pArg);
+
 
 	void		ShowLoginPage();
 	void		ShowLoginSuccessPage();

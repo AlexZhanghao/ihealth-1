@@ -205,7 +205,7 @@ void robot::resetPos() {
 void robot::setWindow(HWND hWnd)
 {
 	m_hWnd = hWnd;
-	bDetect->Set_hWnd(hWnd);
+	bDetect->SetHWND(hWnd);
 	pasvMode->Set_hWnd(hWnd);
 	ControlCard::GetInstance().Set_hWnd(hWnd);
 	EMGContrl->m_hWnd = hWnd;

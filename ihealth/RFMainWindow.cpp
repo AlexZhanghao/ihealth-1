@@ -1160,6 +1160,8 @@ LRESULT RFMainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:	   lRes = OnKeyDown(uMsg, wParam, lParam, bHandled); break;
 		case WM_MENUCLICK:	   lRes = OnMenuClick(uMsg, wParam, lParam, bHandled); break;
 		case WM_EMG_DATA_SAMPLE_MSG: lRes = OnEmgSampleData(uMsg, wParam, lParam); break;
+		case TorqueError: lRes = OnTorqueError(uMsg, wParam, lParam); break;
+		case PullForceError: lRes = OnPullForceError(uMsg, wParam, lParam); break;
 		default:
 			bHandled = FALSE;
 	}
@@ -1224,6 +1226,36 @@ LRESULT RFMainWindow::OnEmgSampleData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	RFMainWindow::MainWindow->m_emgmode_tracetime += 100;
 
 	delete[] pRawData;
+	return true;
+}
+
+LRESULT RFMainWindow::OnTorqueError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	//直接主动和被动都停下来
+	m_robot.stopActiveMove();
+	m_passive_train_action.StopPlay();
+	
+	// 把主动运动的button状态改变过来
+	CCheckBoxUI *pCheckBox1 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_start")));
+	pCheckBox1->SetCheck(false);
+
+	// 把被动运动的button的状态改变过来
+	CCheckBoxUI* pCheckBox2 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("passive_play")));
+	pCheckBox2->SetCheck(false);
+	return true;
+}
+
+LRESULT RFMainWindow::OnPullForceError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	//直接主动和被动都停下来
+	m_robot.stopActiveMove();
+	m_passive_train_action.StopPlay();
+
+	// 把主动运动的button状态改变过来
+	CCheckBoxUI *pCheckBox1 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_start")));
+	pCheckBox1->SetCheck(false);
+
+	// 把被动运动的button的状态改变过来
+	CCheckBoxUI* pCheckBox2 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("passive_play")));
+	pCheckBox2->SetCheck(false);
 	return true;
 }
 

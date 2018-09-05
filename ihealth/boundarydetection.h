@@ -4,6 +4,9 @@
 
 class robot;
 
+#define TorqueError 0x0401
+#define PullForceError 0x0402
+
 class boundaryDetection 
 {
 public:
@@ -37,7 +40,8 @@ public:
 	 void getEncoderData();
 	 //获取关节速度
 	 void getJointVel();
-	 void Set_hWnd(HWND hWnd);
+	 void SetHWND(HWND hWnd);
+	 HWND GetHWND();
      void check();
 		
 	 void SetRobot(robot *pRobot);
