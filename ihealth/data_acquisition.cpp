@@ -2,9 +2,10 @@
 
 #include <iostream>
 #include<Windows.h>
+#include <Eigen/core>
 
-using namespace std;
 using namespace Eigen;
+using namespace std;
 
 const char *DataAcquisition::kTorqueChannel = "dev2/ai4:5";
 const char *DataAcquisition::kPullSensorChannel = "dev2/ai0:3";
@@ -82,12 +83,27 @@ void DataAcquisition::AcquisitePullSensorData() {
 }
 
 void DataAcquisition::AcquisiteSixDemensionData(double output_buf[6]) {
+	TaskHandle taskHandle = 0;
 	int32 read = 0;
 	int status = 0;
 	double raw_data[6];
+	/*status = DAQmxCreateTask("SixDemensionDataTask", &taskHandle);
+	status = DAQmxCreateAIVoltageChan(taskHandle, kSixDimensionForceChannel, "SixDimensionChannel", DAQmx_Val_Diff, -10, 10, DAQmx_Val_Volts, NULL);
+	status = DAQmxCfgSampClkTiming(taskHandle, "OnboardClock", 100, DAQmx_Val_Rising, DAQmx_Val_ContSamps, 1);
+	status = DAQmxStartTask(taskHandle);
+	status = DAQmxReadAnalogF64(taskHandle, 1, 0.2, DAQmx_Val_GroupByScanNumber, raw_data, 6, &read, NULL);
+	status = DAQmxStopTask(taskHandle);
+	status = DAQmxClearTask(taskHandle);*/
 	status = DAQmxReadAnalogF64(m_task_handle, 1, 0.2, DAQmx_Val_GroupByScanNumber, raw_data, 6, &read, NULL);
+	//cout << "status is : " << status << endl;
+	//char buffer[256];
+	//DAQmxGetErrorString(status, buffer, 256);
+	//cout << "error code is : " << buffer << endl;
 
-	//¼ÆËã
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+	//printf("%lf    %lf    %lf    %lf    %lf    %lf \n", raw_data[0], raw_data[1], raw_data[2], raw_data[3], raw_data[4], raw_data[5]);
+
 	Matrix<double, 6, 1> dat;
 	for (int i = 0; i < 6; ++i) {
 		dat(i, 0) = raw_data[i];
@@ -95,6 +111,7 @@ void DataAcquisition::AcquisiteSixDemensionData(double output_buf[6]) {
 
 	VectorXd result(6);
 	result = kTransformMatrix * dat;
+
 
 	for (int i = 0; i < 6; ++i) {
 		output_buf[i] = result(i);
@@ -138,15 +155,15 @@ double DataAcquisition::ElbowBackwardPull() {
 	return kRawToReal * elbow_raw_backward_pull_;
 }
 
-//bool DataAcquisition::StartTask() {
-//	int status;
-//	status = DAQmxStartTask(m_task_handle);
-//	cout << status << endl;
-//	return status == 0;
-//}
-//
-//bool DataAcquisition::StopTask() {
-//	int status;
-//	status = DAQmxStopTask(m_task_handle);
-//	return status == 0;
-//}
+bool DataAcquisition::StartTask() {
+	int status;
+	status = DAQmxStartTask(m_task_handle);
+	cout << status << endl;
+	return status == 0;
+}
+
+bool DataAcquisition::StopTask() {
+	int status;
+	status = DAQmxStopTask(m_task_handle);
+	return status == 0;
+}

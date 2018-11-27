@@ -246,7 +246,7 @@ int RFPatientsManager::OnAddOK(EventArg* pArg)
 			RFPatientsManager::get()->setPage(0);
 		}
 
-		if (RFMainWindow::MainWindow && RFMainWindow::MainWindow->m_patient_add_page->IsVisible() == true) {
+		/* if (RFMainWindow::MainWindow && RFMainWindow::MainWindow->m_patient_add_page->IsVisible() == true) {
 
 			CLabelUI* pLabel = static_cast<CLabelUI*>(RFMainWindow::MainWindow->m_pm.FindControl(_T("manager_patient_welcom")));
 			pLabel->SetText((_T("»¶Ó­Äú£¬") + RFMainWindow::MainWindow->m_login_info.login_user + _T("!¡Å")).c_str());
@@ -254,7 +254,7 @@ int RFPatientsManager::OnAddOK(EventArg* pArg)
 			RFMainWindow::MainWindow->UpdateManagePatientPage(RFPatientsManager::get()->getPage(RFPatientsManager::get()->m_current_page));
 			RFMainWindow::MainWindow->UpdateManagePageNumber(RFPatientsManager::get()->m_current_page);
 			RFMainWindow::MainWindow->ShowManagerPatientPage();
-		}
+		} */
 	}
 	return 1;
 }

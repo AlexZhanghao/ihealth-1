@@ -55,6 +55,7 @@ void RFPatientsTrainDetails::AddPatientTrainDetails(const PatientTrainDetails& d
 	PatientTrainDetails* pParam = new PatientTrainDetails;
 	*pParam = detail;
 
+	RFPatientsTrainDetails::get()->m_patienttraindetails.push_back(*pParam);
 	CTask::Assign(CTask::NotWait, Panic(), pParam, EventHandle(&RFMySQLThread::AddPatientTrainDetails), RFMainWindow::UIThread, RFMainWindow::DBThread);
 }
 

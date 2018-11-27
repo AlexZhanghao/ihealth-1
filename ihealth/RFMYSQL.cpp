@@ -33,6 +33,9 @@ int RFMYSQL::Open(const char* host, const char* usr, const char* pwd, const char
 		return -1;
 	}
 	
+	char reconnect = 1;
+	::mysql_options(_db, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+
 	connected = true;
 	return 1;
 }

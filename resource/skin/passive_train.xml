@@ -52,17 +52,18 @@
                 <HorizontalLayout height="80">
                     <Label name="passsive_train_cur_action_name" text="摸右肩" align="right" valign="center" width="116" textcolor="#FF6C6C6C" font="2"/>
                     <Control width="28"/>
-                    <MusicProgress name="passive_train_progress" width="480" ptotal="100" pcurrent="0" pheight="5" pcurretheight="10" pcurretwidth="10" pbkimage="passive_playbg.png" pforeimage="passive_playjindu.png" pcurimage="passive_playmake.png"/>
-                    <Label name="passsive_train_progress_text" text="00:00/01:40" align="centervcenter" width="160" textcolor="#FF6C6C6C" font="2"/>
+					<!--   <MusicProgress name="passive_train_progress" width="480" ptotal="100" pcurrent="0" pheight="5" pcurretheight="10" pcurretwidth="10" pbkimage="passive_playbg.png" pforeimage="passive_playjindu.png" pcurimage="passive_playmake.png"/>   -->
+					<Label name="passsive_train_progress_text" text="00:00/01:40" align="centervcenter" width="160" textcolor="#FF6C6C6C" font="2"/>
+					 <Control width="480"/>
                     <CheckBox name="passive_play" width="51" normalimage="passive_play.png" selectedimage="passive_suspend.png" disabledimage="passive_play.png"/>
                     <Control width="28"/>
-                    <Button width="51" name="passive_recover" normalimage="beidong_btn_zt_h.png" hotimage="beidong_btn_zt_h.png" pushedimage="beidong_btn_zt_h.png"/>
+                    <Button width="51" name="passive_recover" normalimage="beidong_btn_zt_h.png" hotimage="beidong_btn_zt_h.png" pushedimage="beidong_btn_zt_hv.png"/>
                     <Control width="28"/>
                     <Button width="51" name="passive_volume" normalimage="passive_volume.png" hotimage="passive_volume.png" pushedimage="passive_volume.png"/>
                     <Control width="28"/>
-                    <Option width="51" name="passive_play10" selected="true" group="passive_play_order" normalimage="passive_play10.png" hotimage="passive_play10.png" pushedimage="passive_play10.png"/>
+                    <Option width="51" name="passive_play10" visible="false" selected="false" group="passive_play_order" normalimage="passive_play10.png" hotimage="passive_play10.png" pushedimage="passive_play10.png"  selectedimage="passive_play10v.png"  />
                     <Control width="28"/>
-                    <Option width="51" name="passive_list" selected="false" group="passive_play_order" normalimage="passive_list.png" hotimage="passive_list.png" pushedimage="passive_list.png"/>
+                    <Option width="51" name="passive_list" selected="true" group="passive_play_order" normalimage="passive_list.png" hotimage="passive_list.png" pushedimage="passive_list.png" selectedimage="passive_list.png"   />
                     <Control />
                 </HorizontalLayout>
                 <Control />

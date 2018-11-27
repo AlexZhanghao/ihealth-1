@@ -15,8 +15,13 @@
 
 #define PullLimit 4.0 /*实际电压需要除以2*/
 
+double rawTorqueData[5]={0};
+double raw_pull_data[20] = { 0 };
 
-// 这个回调函数是为了改变MessageBox中Text的默认内容                    
+const char *TCH = "Dev2/ai4:5";//力矩采集通道
+const char *pull_sensor_channel = "Dev2/ai0:3";
+
+
 HHOOK   hHook;
 LRESULT   __stdcall   CBTHookProc(long   nCode, WPARAM   wParam, LPARAM   lParam) {
 	if (nCode == HCBT_ACTIVATE) {
@@ -25,14 +30,8 @@ LRESULT   __stdcall   CBTHookProc(long   nCode, WPARAM   wParam, LPARAM   lParam
 	}
 	return   0;
 }
-
-double rawTorqueData[5]={0};
-double raw_pull_data[20] = { 0 };
-
-const char *TCH = "Dev2/ai4:5";//力矩采集通道
-const char *pull_sensor_channel = "Dev2/ai0:3";
-
-boundaryDetection::boundaryDetection() {
+boundaryDetection::boundaryDetection()
+{
 	for (int i = 0; i < 4; i++) {
 		Pull_Sensor[i] = 0;
 		Travel_Switch[i] = 0;
@@ -52,12 +51,12 @@ boundaryDetection::boundaryDetection() {
 	//创建一个匿名的互斥对象，且为有信号状态，
 	hMutex = CreateMutex(NULL, FALSE, NULL);	hAngleMutex= CreateMutex(NULL, FALSE, NULL);
 	hVelMutex= CreateMutex(NULL, FALSE, NULL);
-
 }
 boundaryDetection::~boundaryDetection() {
 	stopBydetect();
 }
-unsigned int __stdcall BydetectThreadFun(PVOID pParam) {
+unsigned int __stdcall BydetectThreadFun(PVOID pParam)
+{
 	boundaryDetection *Bydetect = (boundaryDetection*)pParam;
 	UINT oldTickCount, newTickCount;
 	oldTickCount = GetTickCount();
@@ -258,13 +257,13 @@ double* boundaryDetection::getVel()
 
 void boundaryDetection::check() {
 	//急停开关提示
-	if (!m_emergency_stop_status) {
+	/*if (!m_emergency_stop_status) {
 		int ret = ::MessageBox(m_hWnd, _T("检测到急停开关被按下，请检查机器是否正常运行, 点击确定关闭软件。"), _T("硬件急停"), MB_OK | MB_ICONEXCLAMATION);
 		if (ret == IDOK) {
 			ControlCard::GetInstance().Close();
-			::PostMessage(m_hWnd, WM_CLOSE, NULL, NULL);
+			::PostMessage(m_hWnd, WM_QUIT, NULL, NULL);
 		}
-	}
+	}*/
 
 	// 力矩保护
 	DataAcquisition::GetInstance().AcquisiteTorqueData();
@@ -273,7 +272,6 @@ void boundaryDetection::check() {
 	if (abs_shoulder_torque > ShoulderTorqueLimit || abs_elbow_torque > ElbowTorqueLimit) {
 		//在这里要先把动作暂停下来，我们就用post message的方式去暂停，直接调用暂停的接口。
 		::PostMessage(m_hWnd, TorqueError, NULL, NULL);
-
 		// 然后显示一个MessageBox去提示复位
 		hHook = SetWindowsHookEx(WH_CBT, (HOOKPROC)CBTHookProc, NULL, GetCurrentThreadId());
 		int ret = ::MessageBox(m_hWnd, _T("关节力矩超出许可范围，请医生检查患者是否发生痉挛。"), _T("力矩保护"), MB_OK | MB_ICONEXCLAMATION);
@@ -292,8 +290,7 @@ void boundaryDetection::check() {
 		abs_elbow_forward_pull > PullLimit || abs_elbow_backward_pull > PullLimit) {
 		// 同样需要先把动作暂停下来
 		::PostMessage(m_hWnd, PullForceError, NULL, NULL);
-
-		wstring msg(_T("钢丝绳拉力超出许可范围，请检查患者是否痉挛或设备是否异常,F1="));
+		wstring msg(_T("钢丝绳拉力超出许可范围，请检查异常并联系制造商,F1="));
 		msg += to_wstring(abs_shoulder_forward_pull);
 		msg += (_T(", F2="));
 		msg += to_wstring(abs_shoulder_backward_pull);
@@ -309,91 +306,11 @@ void boundaryDetection::check() {
 			ControlCard::GetInstance().ResetPosition();
 		}
 	}
-
- 	//double timeTorque1 = fabs(Torque_Sensor[1]);
-	//if (timeTorque1 > ShoulderTorqueLimit) {
-	//	ctrlCardOfTorque->ServeTheMotor(OFF);
-	//	//ctrlCardOfTorque->SetClutch(COFF);
-	//	is_error_happens_ = true;
-	//	char message_tracing[1024];
-	//	sprintf(message_tracing, "Shoulder Torque is out of range, BrokenTorque is %0.2f", timeTorque1);
-	//	LOG1(message_tracing);
-	//	int ret = ::MessageBox(m_hWnd, _T("肩部力矩值大于额定值，是否复位？点击取消关闭软件"), _T("力矩保护"), MB_YESNOCANCEL);
-	//	switch (ret) {
-	//	case IDYES:
-	//		if (m_pRobot != NULL) {
-	//			m_pRobot->resetPos();
-	//		}
-	//		break;
-	//	case IDCANCEL:
-	//		::PostMessage(m_hWnd, WM_CLOSE, NULL, NULL);
-	//		break;
-	//	default:
-	//		break;
-	//	}
-
-	//}
-
-	//double timeTorque0 = fabs(Torque_Sensor[0]);
-	//if (timeTorque0 > ElbowTorqueLimit) {
-	//	ctrlCardOfTorque->ServeTheMotor(OFF);
-	//	//ctrlCardOfTorque->SetClutch(COFF);
-	//	is_error_happens_ = true;
-	//	char message_tracing[1024];
-	//	sprintf(message_tracing, "Elbow Torque is out of range, BrokenTorque is %0.2f", timeTorque0);
-	//	LOG1(message_tracing);
-
-	//	int ret = ::MessageBox(m_hWnd, _T("肘部力矩值大于额定值，是否复位？点击取消关闭软件"), _T("力矩保护"), MB_YESNOCANCEL);
-	//	switch (ret) {
-	//	case IDYES:
-	//		if (m_pRobot != NULL) {
-	//			m_pRobot->resetPos();
-	//		}
-	//		break;
-	//	case IDCANCEL:
-	//		::PostMessage(m_hWnd, WM_CLOSE, NULL, NULL);
-	//		break;
-	//	default:
-	//		break;
-	//	}
-	//}
-
-	//double time_pull[4]{ 0 };
-	//double pull_limit[4]{ PULL_LIMIT0, PULL_LIMIT1, PULL_LIMIT2, PULL_LIMIT3 };
-	//for (int i = 0; i < 4; i++) {
-	//	time_pull[i] = Pull_Sensor[i];
-	//	if (time_pull[i] > pull_limit[i]) {
-	//		ctrlCardOfTorque->ServeTheMotor(OFF);
-	//		ctrlCardOfTorque->SetClutch(COFF);
-
-	//		char message_tracing[1024];
-	//		sprintf(message_tracing, "pull sensor %d is out of range, BrokenTorque is %0.2f", i, timeTorque0);
-	//		LOG1(message_tracing);
-
-	//		int ret = ::MessageBox(m_hWnd, _T("钢丝绳拉力大于额定值，是否复位？点击取消关闭软件"), _T("拉力保护"), MB_YESNOCANCEL);
-	//		switch (ret) {
-	//		case IDYES:
-	//			if (m_pRobot != NULL) {
-	//				m_pRobot->resetPos();
-	//			}
-	//			break;
-	//		case IDCANCEL:
-	//			::PostMessage(m_hWnd, WM_CLOSE, NULL, NULL);
-	//			break;
-	//		default:
-	//			break;
-	//		}
-	//	}
-	//}
 }
 
 
- void boundaryDetection::SetHWND(HWND hWnd) {
+ void boundaryDetection::Set_hWnd(HWND hWnd) {
 	 m_hWnd = hWnd;
- }
-
- HWND boundaryDetection::GetHWND() {
-	 return m_hWnd;
  }
 
  void boundaryDetection::SetRobot(robot *pRobot) {

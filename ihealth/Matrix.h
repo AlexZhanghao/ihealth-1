@@ -38,17 +38,11 @@ const Vector3d AxisPosition[5] = {
 };
 #else
 const Vector3d AxisDirection[5] = {
-	//Vector3d(-1,0,0),
-	//Vector3d(0,0,-1),
-	//Vector3d(0,-1,0),
-	//Vector3d(0,-1,0),
-	//Vector3d(1,0,0)
-
-	Vector3d(1.0,0,0),
-	Vector3d(0,0,1.0),
-	Vector3d(0,-1.0,0),
-	Vector3d(0,-1.0,0),
-	Vector3d(-1.0,0,0)
+	Vector3d(-1,0,0),
+	Vector3d(0,0,-1),
+	Vector3d(0,-1,0),
+	Vector3d(0,-1,0),
+	Vector3d(1,0,0)
 };
 const Vector3d AxisPosition[5] = {
 	Vector3d(-UpperArmLength - LowerArmLength,0,0),

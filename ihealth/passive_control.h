@@ -1,4 +1,4 @@
-#ifndef PASVCONTRL_H
+﻿#ifndef PASVCONTRL_H
 #define PASVCONTRL_H
 #include"control_card.h"
 #include"boundarydetection.h"

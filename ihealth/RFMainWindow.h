@@ -209,7 +209,6 @@ public:
 	static int	OnSearchOK(EventArg *pArg);
 	static int  OnFilterOK(EventArg* pArg);
 
-
 	void		ShowLoginPage();
 	void		ShowLoginSuccessPage();
 	void		ShowMainPage();
@@ -224,6 +223,7 @@ public:
 	void		ShowPatientAdd(std::wstring patientid);
 	void		ShowAboutPage();
 	void		ShowPersonorPage();
+	void		ShowSetSystemPage();
 	void		ShowPatientTrainInformation();
 	void		ShowPatientTrainDetail(std::wstring patientid);
 	void		ShowEyeModeTrainPage();
@@ -329,6 +329,7 @@ public:
 	CHorizontalLayoutUI*	m_patient_add_page;
 	CHorizontalLayoutUI*	m_about_page;
 	CHorizontalLayoutUI*	m_personor_info_edit_page;
+	CHorizontalLayoutUI*	m_systemset_info_edit_page;
 	CHorizontalLayoutUI*	m_train_main_page;
 	CHorizontalLayoutUI*	m_active_train_page;
 	CHorizontalLayoutUI*	m_patient_train_info;

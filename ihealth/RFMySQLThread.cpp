@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+ï»¿#include "StdAfx.h"
 #include "RFMySQLThread.h"
 #include "RFMainWindow.h"
 #include "RFCharSet.h"
@@ -140,7 +140,10 @@ int RFMySQLThread::Connect(EventArg *pArg)
 	RFMySQLThread *pCurrentThread = pArg->GetSender<RFMySQLThread*>();
 	CTask *pTask = pArg->GetAttach<CTask*>();
 
-	if (pCurrentThread->m_db.Open("139.224.24.116", "rfhk", "runfeng168", "instruments", 3306) < 0)
+	pupiltracker::ConfigFile cgf;
+	cgf.read("../../resource/params/mysql.cfg");
+
+	if (pCurrentThread->m_db.Open(cgf.get<std::string>("ip").c_str(), cgf.get<std::string>("user").c_str(), cgf.get<std::string>("password").c_str(), "instruments", 3306) < 0)
 	{
 		CTask::Assign(CTask::NotWait, Panic(), NULL, EventHandle(&RFMainWindow::OnConnectFail), pCurrentThread, RFMainWindow::UIThread);
 		return 1;
@@ -310,7 +313,7 @@ int RFMySQLThread::FilterPatient(EventArg* pArg)
 		condition += " and name='"+TGUTF16ToUTF8(pParam->name) + "'";
 	}
 
-	if (pParam->sex == _T("ÄÐ") || pParam->sex == _T("Å®")) {
+	if (pParam->sex == _T("ç”·") || pParam->sex == _T("å¥³")) {
 		condition += " and sex='" + TGUTF16ToUTF8(pParam->sex) + "'";
 	}
 
@@ -391,7 +394,7 @@ int RFMySQLThread::ExportPatient(EventArg* pArg)
 			condition += " and name='"+TGUTF16ToUTF8(param.name) + "'";
 		}
 
-		if (param.sex == _T("ÄÐ") || param.sex == _T("Å®")) {
+		if (param.sex == _T("ç”·") || param.sex == _T("å¥³")) {
 			condition += " and sex='" + TGUTF16ToUTF8(param.sex) + "'";
 		}
 
@@ -458,7 +461,7 @@ int RFMySQLThread::ExportPatient(EventArg* pArg)
 	pParam = NULL;
 
 
-	CTask::Assign(CTask::NotWait, Panic(), pResult, EventHandle(&RFPatientsManager::OnExportPatientFilterOK), pCurrentThread, CWorkThread::GetWorker());
+	CTask::Assign(CTask::NotWait, Panic(), pResult, EventHandle(&RFPatientsManager::OnExportPatientFilterOK), pCurrentThread, RFMainWindow::UIThread);
 
 }
 
@@ -477,7 +480,7 @@ int RFMySQLThread::Load(EventArg* pArg)
 		condition += " and name='"+TGUTF16ToUTF8(filter.name) + "'";
 	}
 
-	if (filter.sex == _T("ÄÐ") || filter.sex == _T("Å®")) {
+	if (filter.sex == _T("ç”·") || filter.sex == _T("å¥³")) {
 		condition += " and sex='" + TGUTF16ToUTF8(filter.sex) + "'";
 	}
 
@@ -533,6 +536,7 @@ int RFMySQLThread::Load(EventArg* pArg)
 			patient.totaltreattime = TGUTF8ToUTF16(stmt.GetString(8));
 			patient.recoverdetail = TGUTF8ToUTF16(stmt.GetString(9));
 			patient.remarks = TGUTF8ToUTF16(stmt.GetString(10));
+			patient.flag = 0;
 
 			patients.push_back(patient);
 		}
@@ -560,8 +564,10 @@ int RFMySQLThread::Save(EventArg* pArg)
 		return 1;
 	}
 	
+	//wsprintf(fields, _T("hospitalid=%d, doctorid=%d, age=%d, flag=%d where id=%d"), pParam->hospitalid, pParam->doctorid, pParam->age, pParam->flag, pParam->id);
+
 	wchar_t fields[256] = _T("");
-	wsprintf(fields, _T("hospitalid=%d, doctorid=%d, age=%d, flag=%d where id=%d"), pParam->hospitalid, pParam->doctorid, pParam->age, pParam->flag, pParam->id);
+	wsprintf(fields, _T("  age=%d where id=%d"),   pParam->age, pParam->id);
 
 	std::wstring sql = _T("update patient set ");
 	sql += _T("name='") + pParam->name + _T("',");
@@ -578,7 +584,7 @@ int RFMySQLThread::Save(EventArg* pArg)
 	delete pParam;
 	pParam = NULL;
 
-	CTask::Assign(CTask::NotWait, Panic(), NULL, EventHandle(&RFPatientsManager::OnModifyOK), pCurrentThread, RFMainWindow::UIThread);
+	//CTask::Assign(CTask::NotWait, Panic(), NULL, EventHandle(&RFPatientsManager::OnModifyOK), pCurrentThread, RFMainWindow::UIThread);
 
 	return 1;
 }
@@ -832,10 +838,22 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 				double treattime = atof(totaltreattime.c_str());
 				treattime += ((double)totaltime / (double)3600);
 
+				/*
 				char szsql[1024];
 				sprintf(szsql, "UPDATE patient SET lasttreattime='%s', totaltreattime='%.3f%s', recoverdetail='%s' where id=%d", 
-					TGUTF16ToUTF8(pParam->lasttreattime).c_str(), treattime, TGUTF16ToUTF8(_T("Ð¡Ê±")).c_str(), TGUTF16ToUTF8(pParam->recoverdetail).c_str(), pParam->patientid);
+					TGUTF16ToUTF8(pParam->lasttreattime).c_str(), treattime, TGUTF16ToUTF8(_T("å°æ—¶")).c_str(), TGUTF16ToUTF8(pParam->recoverdetail).c_str(), pParam->patientid);
 				RFMainWindow::DBThread->m_db.Exec(szsql);
+				*/
+
+				char sz[1024];
+				sprintf(sz, "%.3f%s", treattime, TGUTF16ToUTF8(_T("å°æ—¶")).c_str());
+				
+				PatientInfo temppatient = RFPatientsManager::get()->getPatient(pParam->patientid);
+				temppatient.recoverdetail = pParam->recoverdetail;
+				temppatient.lasttreattime = pParam->lasttreattime;
+				temppatient.totaltreattime = TGUTF8ToUTF16(sz);
+				RFPatientsManager::get()->modify(temppatient);
+				
 			}
 		}
 	}
@@ -848,7 +866,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 	std::wstring tracevalue;
 	if (pParam->traintype == RF_TRAINTYPE_STRING_BD)
 	{
-		wsprintf(traintype, _T("%d"), 4);	// ¼ç¹Ø½Ú
+		wsprintf(traintype, _T("%d"), 4);	// è‚©å…³èŠ‚
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(pParam->target_vel[0]));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -860,7 +878,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 		RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 
 
-		wsprintf(traintype, _T("%d"), 5);	// Öâ¹Ø½Ú
+		wsprintf(traintype, _T("%d"), 5);	// è‚˜å…³èŠ‚
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(pParam->target_vel[1]));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -894,7 +912,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 			angle.push_back(pParam->emg_angle[0].at(i));
 			angle.push_back(pParam->emg_angle[1].at(i));
 		}
-		wsprintf(traintype, _T("%d"), 1);	// ÔË¶¯½Ç¶È
+		wsprintf(traintype, _T("%d"), 1);	// è¿åŠ¨è§’åº¦
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(angle));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -905,7 +923,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 
 		RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 	}  else if (pParam->traintype == RF_TRAINTYPE_STRING_ZD) {
-		wsprintf(traintype, _T("%d"), 1);	// ÔË¶¯½Ç¶È
+		wsprintf(traintype, _T("%d"), 1);	// è¿åŠ¨è§’åº¦
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(pParam->target_angle));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -916,7 +934,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 
 		RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 
-		wsprintf(traintype, _T("%d"), 2);	// ÎÕÁ¦
+		wsprintf(traintype, _T("%d"), 2);	// æ¡åŠ›
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(pParam->target_wl));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -927,7 +945,7 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 
 		RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 	} else if(pParam->traintype == RF_TRAINTYPE_STRING_YD) {
-		wsprintf(traintype, _T("%d"), 1);	// ÔË¶¯½Ç¶È
+		wsprintf(traintype, _T("%d"), 1);	// è¿åŠ¨è§’åº¦
 		tracevalue = TGUTF8ToUTF16(EncodeMovements(pParam->target_angle));
 
 		sql = _T("INSERT INTO traindata (traindetailid,tracevalue,traintype) value(");
@@ -1061,12 +1079,13 @@ int RFMySQLThread::LoadPassiveTrainInfo(EventArg* pArg)
 {
 	RFMySQLThread *pCurrentThread = pArg->GetSender<RFMySQLThread*>();
 	CTask *pTask = pArg->GetAttach<CTask*>();
-
-	std::string sql = "select id, name, traintype, movements, timelen from passivetrain";
+	
+	char sql[256];
+	sprintf(sql, "select id, name, traintype, movements, timelen from passivetrain where doctorid=%d", RFPatientsManager::get()->m_doctorid);
 
 	LoadPassiveTrainInfoResult *pResult = new LoadPassiveTrainInfoResult;
 	RFMYSQLStmt stmt;
-	if (stmt.Prepare(RFMainWindow::DBThread->m_db, sql.c_str()) > 0) {
+	if (stmt.Prepare(RFMainWindow::DBThread->m_db, sql) > 0) {
 
 		std::list<PassiveTrainInfo> trains;
 		while(stmt.Step() > 0) {
@@ -1132,12 +1151,19 @@ int RFMySQLThread::AddPassiveTrainInfo(EventArg* pArg)
 	}
 	std::string movements =EncodeMovements(vDoubles);
 
-	std::wstring sql = _T("INSERT INTO passivetrain (id,name,traintype,movements,timelen) value(");
-	sql += _T("'") + pParam->id + _T("',");
+	// RFPatientsManager::get()->m_doctorid;
+	std::wstring sql = _T("INSERT INTO passivetrain (name,traintype,movements,timelen,doctorid) value(");
+	//sql += _T("'") + pParam->id + _T("',");
 	sql += _T("'") + pParam->name + _T("',");
 	sql += _T("'") + pParam->traintype + _T("',");
 	sql += _T("'") + TGUTF8ToUTF16(movements) + _T("',");
-	sql += _T("'") + pParam->timelen + _T("')");
+	sql += _T("'") + pParam->timelen + _T("',");
+
+	wostringstream oss;
+	oss << RFPatientsManager::get()->m_doctorid;
+	wstring wstr = oss.str();
+
+	sql += _T("'") + wstr + _T("')");
 	RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 
 	CTask::Assign(CTask::NotWait, Panic(), pParam, EventHandle(&RFPassiveTrain::OnAddPassiveTrainInfoOK), pCurrentThread, RFMainWindow::UIThread);
@@ -1155,6 +1181,12 @@ int RFMySQLThread::DeletePassiveTrainInfo(EventArg *pArg) {
 
 	std::wstring sql = _T("DELETE FROM passivetrain WHERE name = ");
 	sql += _T("'") + pParam->name + _T("'");
+
+	wostringstream oss;
+	oss << RFPatientsManager::get()->m_doctorid;
+	wstring wstr = oss.str();
+	sql += _T("and doctorid =") + wstr;
+
 	RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 	
 	CTask::Assign(CTask::NotWait, Panic(), pParam, EventHandle(&RFPassiveTrain::OnDeletePassiveTrainInfoOK), pCurrentThread, RFMainWindow::UIThread);
@@ -1196,7 +1228,7 @@ int RFMySQLThread::LoadPatientTrainData(EventArg* pArg)
 				if (tracetype == 3)	{
 					train.timetrace = (i/4) * 100;		// EMG 10HZ
 				} else if (tracetype == 1) {
-					train.timetrace = (i/2) * 200;		// ÆäËû 5HZ
+					train.timetrace = (i/2) * 200;		// å…¶ä»– 5HZ
 				} else {
 					train.timetrace = i * 200;
 				}

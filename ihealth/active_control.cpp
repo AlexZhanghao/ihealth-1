@@ -46,16 +46,28 @@ activecontrol:: ~activecontrol() {
 	//DataAcquisition::GetInstance().StopTask();
 }
 
-unsigned int __stdcall FTSThreadFun(PVOID pParam) {
+unsigned int __stdcall FTSThreadFun(PVOID pParam)
+{
 	activecontrol *FTS = (activecontrol*)pParam;
 	UINT oldTickCount, newTickCount;
 	oldTickCount = GetTickCount();
 
-	// 计算六维力偏置
+	QueryPerformanceFrequency(&frequency);
+	quadpart = (double)frequency.QuadPart;
+
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+
+
+	//start acquisition
+	//DataAcquisition::GetInstance().StopTask();
+	//DataAcquisition::GetInstance().StartTask();
+
 	double sum[6]{ 0.0 };
 	double buf[6]{ 0.0 };
 	for (int i = 0;i < 10;++i) {
 		DataAcquisition::GetInstance().AcquisiteSixDemensionData(buf);
+		//printf("sixdata %lf    %lf    %lf    %lf    %lf    %lf \n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
 
 		for (int j = 0;j < 6;++j) {
 			sum[j] += buf[j];
@@ -65,20 +77,24 @@ unsigned int __stdcall FTSThreadFun(PVOID pParam) {
 		FTS->m_six_dimension_offset[i] = sum[i] / 10;
 	}
 
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
 	//printf("bias %lf    %lf    %lf    %lf    %lf    %lf \n", FTS->m_six_dimension_offset[0], FTS->m_six_dimension_offset[1], FTS->m_six_dimension_offset[2], FTS->m_six_dimension_offset[3], FTS->m_six_dimension_offset[4], FTS->m_six_dimension_offset[5]);
 	//printf("sum %lf    %lf    %lf    %lf    %lf    %lf \n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
 
+	DataAcquisition::GetInstance().StopTask();
+	DataAcquisition::GetInstance().StartTask();
+
 	while (TRUE) {
 		if (FTS->m_stop) {
+			//DataAcquisition::GetInstance().StopTask();
 			break;
 		}
 
 		//延时 BOYDET_TIME s
-		while (TRUE) {
+		while (TRUE)
+		{
 			newTickCount = GetTickCount();
-			if (newTickCount - oldTickCount >= FTS_TIME * 1000) {
+			if (newTickCount - oldTickCount >= FTS_TIME * 1000)
+			{
 				oldTickCount = newTickCount;
 				break;
 			}
@@ -87,7 +103,9 @@ unsigned int __stdcall FTSThreadFun(PVOID pParam) {
 		}
 
 		FTS->timerAcquisit();
+
 	}
+	//std::cout << "FTSThreadFun Thread ended." << std::endl;
 	return 0;
 }
 void activecontrol::startAcquisit()
@@ -173,9 +191,9 @@ void activecontrol::Raw2Trans(double RAWData[6], double DistData[6])
 	Matrix3d rotate_matrix;
 	//这里的旋转矩阵要根据六维力坐标系和手柄坐标系来具体得到
 	rotate_matrix <<
-		0, -1, 0,
-		0, 0, 1,
-		-1, 0, 0;
+		1, 0, 0,
+		0, 0, -1,
+		0, 1, 0;
 	Vector3d ForcePosition(-0.075, 0.035, 0);
 	//手柄坐标系下手柄坐标系原点到六维力坐标系原点的向量
 	//Vector3d ForcePosition(0.075, -0.035, 0);
@@ -266,6 +284,11 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	Pos(0, 0) = angle[0];
 	Pos(1, 0) = angle[1];
 
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+	//printf("elbow angle: %lf\n", angle[1]);
+	//printf("shoulder angle: %lf\n", angle[0]);
+	//printf("fx:%lf    fy:%lf    fz:%lf \n Mx:%lf    My:%lf    Mz:%lf \n", FiltedData[3], FiltedData[4], FiltedData[5], FiltedData[0], FiltedData[1], FiltedData[2]);
 	
 	for (int i = 0; i < 6; i++)
 	{
@@ -279,8 +302,6 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	char message_tracing[1024];
 	sprintf(message_tracing, "ActiveControl, Ud_Shoul is %0.2f,Ud_Arm is %0.2f", Ud_Shoul, Ud_Arm);
 	LOG1(message_tracing);
-
-	// 当速度很小时，把速度设为0，防止抖动
 	if ((Ud_Arm > -0.5) && (Ud_Arm < 0.5))
 	{
 		Ud_Arm = 0;
@@ -289,8 +310,6 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	{
 		Ud_Shoul = 0;
 	}
-
-	// 当速度很大时，进行限速,防止速度太快
 	if (Ud_Arm > 5)
 	{
 		Ud_Arm = 5;
@@ -344,7 +363,7 @@ bool activecontrol::isFire()
 	double grip;
 	//这里就是采集握力的数据
 	DataAcquisition::GetInstance().AcquisiteGripData(&grip);
-	if (grip > 0.15)
+	if (grip > 0.1)
 		fireOrNot = true;
 	return fireOrNot;
 }

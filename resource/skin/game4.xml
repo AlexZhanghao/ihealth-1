@@ -17,8 +17,8 @@
                 <Button name="active_train_game4_welcom" text="Welcome Liquan!" textcolor="#FFBECDE1" height="32" align="right" font="11"/>
             </HorizontalLayout>
             <Control height="80"/>
-             <Label text="飞机大战" align="left" height="35" textcolor="#FF253C6E" font="4"/>
-            <Label text="Aircraft Battle" align="left" height="35" textcolor="#FF253C6E" font="4"/>
+             <Label name="gamename" text="飞机大战" align="left" height="35" textcolor="#FF253C6E" font="4"/>
+            <Label text=" " align="left" height="35" textcolor="#FF253C6E" font="4"/>
             <Control height="25"/>
             <VerticalLayout height="748" inset="0,30,43,46" bkimage="box_bg2.png">
                 <HorizontalLayout height="681">

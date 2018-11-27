@@ -1,6 +1,5 @@
 #pragma once
 #include <NIDAQmx.h>
-
 #include <Eigen/core>
 
 class DataAcquisition {
@@ -22,8 +21,8 @@ public:
 	double ElbowForwardPull();
 	double ElbowBackwardPull();
 
-	//bool StartTask();
-	//bool StopTask();
+	bool StartTask();
+	bool StopTask();
 
 private:
 	DataAcquisition();
@@ -46,4 +45,5 @@ private:
 	static const double kRawToReal;
 
 	static Eigen::Matrix<double, 6, 6>  kTransformMatrix;
+
 };

@@ -1,4 +1,4 @@
-#ifndef ACTIVECONTROL_H
+﻿#ifndef ACTIVECONTROL_H
 #define ACTIVECONTROL_H
 /*#include <Eigen/Core>
 #include <unsupported/Eigen/MatrixFunctions>*/

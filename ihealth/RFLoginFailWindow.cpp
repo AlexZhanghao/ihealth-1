@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+ï»¿#include "StdAfx.h"
 #include "RFLoginFailWindow.h"
 #include "RFMainWindow.h"
 #include "RFPassiveTrain.h"
@@ -228,7 +228,7 @@ bool RFDialog::OnOKClose(void *pParam) {
 	if (pMsg->sType != _T("click"))
 		return true;
 
-	//µ±Ö÷¶¯ÔË¶¯Ã»ÓĞ½áÊøµÄÊ±ºò¾Íµã»÷ÁËOK£¬Õâ¸öÊ±ºòÎÒÃÇÓ¦¸ÃÃ»ÓĞ·´Ó¦
+	//å½“ä¸»åŠ¨è¿åŠ¨æ²¡æœ‰ç»“æŸçš„æ—¶å€™å°±ç‚¹å‡»äº†OKï¼Œè¿™ä¸ªæ—¶å€™æˆ‘ä»¬åº”è¯¥æ²¡æœ‰ååº”
 	if (RFMainWindow::MainWindow->m_robot.IsPassiveTeaching()) {
 		return true;
 	}
@@ -253,8 +253,8 @@ bool RFDialog::OnOKClose(void *pParam) {
 			train.target_vel[0] = teach.Target_Vel[0];
 			train.target_vel[1] = teach.Target_Vel[1];
 
-			//ÔÚÕâÀïÎÒÃÇ¼ÓÈëÒ»¸ö»ñÈ¡idµÄ·½·¨£¬Ê×ÏÈ´ÓÊı¾İ¿âÖĞÈ¡idÕâÒ»ĞĞ
-			std::string sql = "select count(*) from passivetrain";
+			//åœ¨è¿™é‡Œæˆ‘ä»¬åŠ å…¥ä¸€ä¸ªè·å–idçš„æ–¹æ³•ï¼Œé¦–å…ˆä»æ•°æ®åº“ä¸­å–idè¿™ä¸€è¡Œ
+			std::string sql = "SELECT AUTO_INCREMENT FROM information_schema.tables where TABLE_NAME='passivetrain'; ";
 			RFMYSQLStmt stmt;
 			if (stmt.Prepare(RFMainWindow::DBThread->m_db, sql.c_str()) > 0) {
 				if (stmt.Step() < 0) {
@@ -262,7 +262,7 @@ bool RFDialog::OnOKClose(void *pParam) {
 				}
 				else {
 					wchar_t id[64] = _T("");
-					wsprintf(id, _T("%d"), stmt.GetInt(0) + 1);
+					wsprintf(id, _T("%d"), stmt.GetInt(0));
 					train.id = id;
 				}
 				stmt.Finalize();
@@ -276,11 +276,11 @@ bool RFDialog::OnOKClose(void *pParam) {
 				wchar_t timelen[64] = _T("");
 				wsprintf(timelen, formt.c_str(), minute, second);
 				train.timelen = timelen;
-				train.traintype = _T("±»¶¯ÑµÁ·");
+				train.traintype = _T("è¢«åŠ¨è®­ç»ƒ");
 				RFPassiveTrain::get()->AddPassiveTrainInfo(train);
 			}
 
-			std::string text = "ÏÖÔÚ¿ªÊ¼" + TGUTF16ToGBK(actionname) + "¶¯×÷";
+			std::string text = "ç°åœ¨å¼€å§‹" + TGUTF16ToGBK(actionname) + "åŠ¨ä½œ";
 			std::wstring filepathname = (std::wstring)m_pm.GetResourcePath() + _T("/voice/") + actionname + _T(".wav");
 
 			TTSSampleData *pTTSSampleData = new TTSSampleData;
@@ -423,7 +423,7 @@ bool RFDialog::OnRecordPasvTrain(void *pParam)
 	
 	CCheckBoxUI* pStart = static_cast<CCheckBoxUI*>(pMsg->pSender);
 	if (!pStart->GetCheck()) {
-		//Õâ¸öÊÇ¿ªÊ¼Â¼ÖÆ
+		//è¿™ä¸ªæ˜¯å¼€å§‹å½•åˆ¶
 		m_tickcount = 0;
 		RFMainWindow::MainWindow->m_robot.startTeach();
 		if (recordTimer) {
@@ -431,7 +431,7 @@ bool RFDialog::OnRecordPasvTrain(void *pParam)
 		}
 		recordTimer = ::SetTimer(NULL, 999, 1000U, (TIMERPROC)OnRecordTimer);
 	} else {
-		//½áÊøÂ¼ÖÆ
+		//ç»“æŸå½•åˆ¶
 		m_tickcount = 0;
 		::KillTimer(NULL, recordTimer);
 		recordTimer = NULL;

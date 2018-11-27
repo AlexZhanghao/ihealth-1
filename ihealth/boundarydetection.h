@@ -2,10 +2,10 @@
 #define BOUNDARYDETECTION_H
 #include "control_card.h"
 
-class robot;
-
 #define TorqueError 0x0401
 #define PullForceError 0x0402
+
+class robot;
 
 class boundaryDetection 
 {
@@ -40,8 +40,7 @@ public:
 	 void getEncoderData();
 	 //获取关节速度
 	 void getJointVel();
-	 void SetHWND(HWND hWnd);
-	 HWND GetHWND();
+	 void Set_hWnd(HWND hWnd);
      void check();
 		
 	 void SetRobot(robot *pRobot);

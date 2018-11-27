@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+ï»¿#include "StdAfx.h"
 #include "RFMainWindow.h"
 #include "RFLoginFailWindow.h"
 #include "RFCharSet.h"
@@ -45,6 +45,7 @@ RFMainWindow::RFMainWindow(void) {
 }
 
 RFMainWindow::~RFMainWindow(void) {
+	ControlCard::GetInstance().Close();
 	m_robotEvent.Stop();
 	RFPatientsManager::release();
 	RFPatientsTrainInfo::release();
@@ -60,8 +61,6 @@ RFMainWindow::~RFMainWindow(void) {
 	CWorkThread::Dispose();
 	CUIThread::Release(UIThread);
 	CWorkThread::Dispose();
-
-	ControlCard::GetInstance().Close();
 }
 
 LPCTSTR RFMainWindow::GetWindowClassName() const { 
@@ -92,7 +91,7 @@ void RFMainWindow::Init() {
 	RFPatientsTrainDetails::get();
 	RFPatientsTrainInfo::get();
 	RFPatientsManager::get();
-	RFPassiveTrain::get()->LoadPassiveTrainInfo();
+	// RFPassiveTrain::get()->LoadPassiveTrainInfo();
 	MainWindow = this;
 	m_robot.setWindow(GetHWND());
 
@@ -198,6 +197,9 @@ void RFMainWindow::BindManagerPatientPageEvent()
 
 	CButtonUI* personor_info_return = static_cast<CButtonUI*>(m_pm.FindControl(_T("personor_info_return")));
 	personor_info_return->OnNotify += MakeDelegate(this, &RFMainWindow::OnReturnMainPage);
+
+	CButtonUI* info_return = static_cast<CButtonUI*>(m_pm.FindControl(_T("systemset_info_return")));
+	info_return->OnNotify += MakeDelegate(this, &RFMainWindow::OnReturnMainPage);
 
 	CButtonUI* prevpage = static_cast<CButtonUI*>(m_pm.FindControl(_T("manage_last_page")));
 	prevpage->OnNotify += MakeDelegate(this, &RFMainWindow::OnManagerPrevPage);
@@ -767,6 +769,10 @@ LRESULT RFMainWindow::OnDuiCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	CContainerUI *pEvaluationYDGNADetail = static_cast<CContainerUI*>(builder22.Create(_T("evaluation_ydgn_detail.xml"), (UINT)0, this, &m_pm));
 	pRoot->Add(pEvaluationYDGNADetail);
 	
+	CDialogBuilder builder23;
+	CContainerUI *pSystemset = static_cast<CContainerUI*>(builder23.Create(_T("systemset.xml"), (UINT)0));
+	pRoot->Add(pSystemset);
+
 	m_pm.AttachDialog(pRoot);
 	m_pm.AddNotifier(this);
 	
@@ -797,7 +803,7 @@ LRESULT RFMainWindow::OnDuiCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	m_evaluation_ydgn_add_page =   static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("evaluation_ydgn_add_page")));
 	m_evaluation_ydgn_detail_page = static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("evaluation_ydgn_detail_page")));
 	//m_active_train_page_list = static_cast<CVerticalLayoutUI>(m_pm.FindControl(_T("active_train_page_list")));
-
+	m_systemset_info_edit_page = static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("systemset_info_edit_page")));
 
 	m_welcom_menu = static_cast<CButtonUI*>(m_pm.FindControl(_T("welcom_menu")));
 	m_welcom_menu->OnNotify += MakeDelegate(this, &RFMainWindow::OnPersonerCenterMenu);
@@ -1051,7 +1057,7 @@ LRESULT RFMainWindow::OnGetMinMaxInfo(UINT uMsg, WPARAM wParam, LPARAM lParam, B
 
 LRESULT RFMainWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	// ÓĞÊ±»áÔÚÊÕµ½WM_NCDESTROYºóÊÕµ½wParamÎªSC_CLOSEµÄWM_SYSCOMMAND
+	// æœ‰æ—¶ä¼šåœ¨æ”¶åˆ°WM_NCDESTROYåæ”¶åˆ°wParamä¸ºSC_CLOSEçš„WM_SYSCOMMAND
 	if( wParam == SC_CLOSE ) {
 		::PostQuitMessage(0L);
 		bHandled = TRUE;
@@ -1098,6 +1104,10 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 		ShowPersonorPage();
 	}
 
+	if (*name == _T("menu_set_system")) {
+		ShowSetSystemPage();
+	}
+	
 	if (*name == _T("menu_change_account")) {
 		m_current_patient.id = -1;
 		RFPatientsManager::release();
@@ -1230,30 +1240,27 @@ LRESULT RFMainWindow::OnEmgSampleData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 LRESULT RFMainWindow::OnTorqueError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	//Ö±½ÓÖ÷¶¯ºÍ±»¶¯¶¼Í£ÏÂÀ´
+	//ç›´æ¥ä¸»åŠ¨å’Œè¢«åŠ¨éƒ½åœä¸‹æ¥
 	m_robot.stopActiveMove();
 	m_passive_train_action.StopPlay();
-	
-	// °ÑÖ÷¶¯ÔË¶¯µÄbutton×´Ì¬¸Ä±ä¹ıÀ´
+
+	// æŠŠä¸»åŠ¨è¿åŠ¨çš„buttonçŠ¶æ€æ”¹å˜è¿‡æ¥
 	CCheckBoxUI *pCheckBox1 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_start")));
 	pCheckBox1->SetCheck(false);
-
-	// °Ñ±»¶¯ÔË¶¯µÄbuttonµÄ×´Ì¬¸Ä±ä¹ıÀ´
+	// æŠŠè¢«åŠ¨è¿åŠ¨çš„buttonçš„çŠ¶æ€æ”¹å˜è¿‡æ¥
 	CCheckBoxUI* pCheckBox2 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("passive_play")));
 	pCheckBox2->SetCheck(false);
 	return true;
 }
 
 LRESULT RFMainWindow::OnPullForceError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	//Ö±½ÓÖ÷¶¯ºÍ±»¶¯¶¼Í£ÏÂÀ´
+	//ç›´æ¥ä¸»åŠ¨å’Œè¢«åŠ¨éƒ½åœä¸‹æ¥
 	m_robot.stopActiveMove();
 	m_passive_train_action.StopPlay();
-
-	// °ÑÖ÷¶¯ÔË¶¯µÄbutton×´Ì¬¸Ä±ä¹ıÀ´
+	// æŠŠä¸»åŠ¨è¿åŠ¨çš„buttonçŠ¶æ€æ”¹å˜è¿‡æ¥
 	CCheckBoxUI *pCheckBox1 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_start")));
 	pCheckBox1->SetCheck(false);
-
-	// °Ñ±»¶¯ÔË¶¯µÄbuttonµÄ×´Ì¬¸Ä±ä¹ıÀ´
+	// æŠŠè¢«åŠ¨è¿åŠ¨çš„buttonçš„çŠ¶æ€æ”¹å˜è¿‡æ¥
 	CCheckBoxUI* pCheckBox2 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("passive_play")));
 	pCheckBox2->SetCheck(false);
 	return true;
@@ -1306,7 +1313,7 @@ int RFMainWindow::OnLoginOK(EventArg *pArg)
 	LoginInfo *pLoginInfo = pTask->GetContext<LoginInfo*>();
 	if (pLoginInfo != NULL) {
 		if (pLoginInfo->logined == 1) {
-			std::wstring welcome = _T("»¶Ó­Äú£¬") + pLoginInfo->login_user + _T("!");
+			std::wstring welcome = _T("æ¬¢è¿æ‚¨ï¼Œ") + pLoginInfo->login_user + _T("!");
 			RFMainWindow::MainWindow->m_welcom->SetText(welcome.c_str());
 			RFMainWindow::MainWindow->ShowLoginSuccessPage();
 			RFMainWindow::MainWindow->m_pm.Invalidate(RFMainWindow::MainWindow->m_welcom->m_rcItem);
@@ -1329,6 +1336,8 @@ int RFMainWindow::OnLoginOK(EventArg *pArg)
 		RFPatientsTrainDetails::get()->SetDoctorID(pLoginInfo->doctorid);
 		RFPatientsTrainDetails::get()->LoadPatientTrainDetails();
 		RFEvaluationData::get()->setDoctorID(pLoginInfo->doctorid);
+
+		RFPassiveTrain::get()->LoadPassiveTrainInfo();
 
 		delete pLoginInfo;
 		pLoginInfo = NULL;
@@ -1396,7 +1405,7 @@ bool RFMainWindow::OnEntry(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return false;
 
-	std::wstring welcom = _T("»¶Ó­Äú£¬") + RFMainWindow::MainWindow->m_login_info.login_user + _T("£¡¡Å");
+	std::wstring welcom = _T("æ¬¢è¿æ‚¨ï¼Œ") + RFMainWindow::MainWindow->m_login_info.login_user + _T("ï¼âˆ¨");
 
 	ShowMainPage();
 	RFMainWindow::MainWindow->m_welcom_menu->SetText(welcom.c_str());
@@ -1411,7 +1420,7 @@ bool RFMainWindow::OnSelectPatient(void* pParam)
 		return false;
 	
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("select_patient_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	UpdatePatientPage(RFPatientsManager::get()->getPage(RFPatientsManager::get()->m_current_page));
 	UpdatePageNumber(RFPatientsManager::get()->m_current_page);
@@ -1425,14 +1434,14 @@ bool RFMainWindow::OnManagerPatient(void* pParam)
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
 		return false;
-	
+	/*
 	if (m_current_patient.id < 0) {
 		RFSelectPatientDialog(GetHWND());
 		return true;
 	}
-
+	*/
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	UpdateManagePatientPage(RFPatientsManager::get()->getPage(RFPatientsManager::get()->m_current_page));
 	UpdateManagePageNumber(RFPatientsManager::get()->m_current_page);
@@ -1453,7 +1462,7 @@ bool RFMainWindow::OnPatientTrain(void* pParam)
 	}
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowTrainPage();
 	return true;
@@ -1481,7 +1490,7 @@ bool RFMainWindow::OnPatientTrainFromActiveTrain(void* pParam)
 	//}
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowTrainPage();
 	return true;
@@ -1496,7 +1505,7 @@ bool RFMainWindow::OnPatientTrainFromPassiveTrain(void *pParam)
 	m_passive_train_action.StopPlay();
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowTrainPage();
 	return true;
@@ -1514,7 +1523,7 @@ bool RFMainWindow::OnPatientTrainMessage(void* pParam)
 	}
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("patient_information_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	UpdateTrainInfoPage(RFPatientsTrainInfo::get()->getPageElement(RFPatientsTrainInfo::get()->m_current_page));
 	UpdateTrainInfoPageNumber(RFPatientsTrainInfo::get()->m_current_page);
@@ -1530,7 +1539,7 @@ bool RFMainWindow::OnPatientTrainDetail(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("patient_traindetail_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowPatientTrainDetail(m_current_patient_id_detail);
 	return true;
@@ -1548,7 +1557,7 @@ bool RFMainWindow::OnPassessment(void* pParam)
 	}
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowEvaluationPage();
 	return true;
@@ -2269,6 +2278,10 @@ bool RFMainWindow::OnAddSavePatient(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CButtonUI* manager_add_patient_save = static_cast<CButtonUI*>(m_pm.FindControl(_T("manager_add_patient_save")));
+	manager_add_patient_save->SetEnabled(false);
+
+
 	PatientInfo patient;
 
 	patient.hospitalid = m_login_info.hospitalid;
@@ -2306,7 +2319,7 @@ bool RFMainWindow::OnAddSavePatient(void *pParam)
 
 	COptionUI* pOption = static_cast<COptionUI*>(m_pm.FindControl(_T("add_patient_sex_man")));
 	if (pOption) {
-		patient.sex= pOption->IsSelected()?_T("ÄĞ"):_T("Å®");
+		patient.sex= pOption->IsSelected()?_T("å¥³"): _T("ç”·");
 	}
 
 	pEdit = static_cast<CEditUI*>(m_pm.FindControl(_T("add_patient_totaltime")));
@@ -2492,7 +2505,7 @@ bool RFMainWindow::OnActiveTrain(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowActiveTrainPage();
 	return true;
@@ -2505,7 +2518,7 @@ bool RFMainWindow::OnActiveTrainFromGame(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	m_robot.stopActiveMove();
 
@@ -2521,10 +2534,10 @@ bool RFMainWindow::OnPassiveTrain(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("passive_train_page_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("passive_patient_name")));
-	pLabel->SetText((_T("»¼Õß:") + m_current_patient.name).c_str());
+	pLabel->SetText((_T("æ‚£è€…:") + m_current_patient.name).c_str());
 
 	ShowPassiveTrainPage();
 	return true;
@@ -2695,7 +2708,7 @@ bool RFMainWindow::OnZDGGJDChart(void *pParam) {
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_zd_name")));
-	traindetial_chart_zd_name->SetText(_T("¹Ø½ÚÔË¶¯½Ç¶È"));
+	traindetial_chart_zd_name->SetText(_T("å…³èŠ‚è¿åŠ¨è§’åº¦"));
 
 	CVerticalLayoutUI* p_zd_gjjd_chart_bk = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("zd_gjjd_chart_bk")));
 	p_zd_gjjd_chart_bk->SetVisible(true);
@@ -2715,7 +2728,7 @@ bool RFMainWindow::OnZDWLChart(void *pParam)
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_zd_name")));
-	traindetial_chart_zd_name->SetText(_T("ÎÕÁ¦"));
+	traindetial_chart_zd_name->SetText(_T("æ¡åŠ›"));
 
 	CHorizontalLayoutUI* p_zd_gjjd_chart_tuli = static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("zd_gjjd_chart_tuli")));
 	p_zd_gjjd_chart_tuli->SetVisible(false);
@@ -2735,7 +2748,7 @@ bool RFMainWindow::OnBDZGJChart(void *pParam)
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_bd_name")));
-	traindetial_chart_zd_name->SetText(_T("Öâ¹Ø½ÚÁ¦¾ØÖµ"));
+	traindetial_chart_zd_name->SetText(_T("è‚˜å…³èŠ‚åŠ›çŸ©å€¼"));
 
 
 	CVerticalLayoutUI* bd_jgj_chart_bk = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("bd_jgj_chart_bk")));
@@ -2753,7 +2766,7 @@ bool RFMainWindow::OnBDJGJChart(void *pParam)
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_bd_name")));
-	traindetial_chart_zd_name->SetText(_T("¼ç¹Ø½ÚÁ¦¾ØÖµ"));
+	traindetial_chart_zd_name->SetText(_T("è‚©å…³èŠ‚åŠ›çŸ©å€¼"));
 
 
 	CVerticalLayoutUI* bd_jgj_chart_bk = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("bd_jgj_chart_bk")));
@@ -2771,7 +2784,7 @@ bool RFMainWindow::OnEMGChart(void *pParam)
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_bd_name")));
-	traindetial_chart_zd_name->SetText(_T("EMGĞÅºÅ"));
+	traindetial_chart_zd_name->SetText(_T("EMGä¿¡å·"));
 
 	CHorizontalLayoutUI* emg_chart_tuli = static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("emg_chart_tuli")));
 	emg_chart_tuli->SetVisible(true);
@@ -2794,7 +2807,7 @@ bool RFMainWindow::OnEMGYDJDChart(void *pParam)
 		return true;
 
 	CLabelUI* traindetial_chart_zd_name = static_cast<CLabelUI*>(m_pm.FindControl(_T("traindetial_chart_emg_name")));
-	traindetial_chart_zd_name->SetText(_T("¹Ø½ÚÔË¶¯½Ç¶È"));
+	traindetial_chart_zd_name->SetText(_T("å…³èŠ‚è¿åŠ¨è§’åº¦"));
 
 	CHorizontalLayoutUI* emg_chart_tuli = static_cast<CHorizontalLayoutUI*>(m_pm.FindControl(_T("emg_chart_tuli")));
 	emg_chart_tuli->SetVisible(false);
@@ -2895,7 +2908,7 @@ bool RFMainWindow::OnEyeModeTrainPage(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("eye_mode_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	m_robot.enterEyeMode();
 	ShowEyeModeTrainPage();
@@ -2908,7 +2921,7 @@ bool RFMainWindow::OnEMGModeTrainPage(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("emg_mode_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	ShowEmgModeTrainPage();
 
@@ -3007,15 +3020,17 @@ bool RFMainWindow::OnEMGModeRecovery(void *pParam)
 
 bool RFMainWindow::OnZhudongFeiji(void *pParam)
 {
-	//TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
-	//if (pMsg->sType != _T("click"))
-	//	return true;
+	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
+	if (pMsg->sType != _T("click"))
+		return true;
 
-	//Òş²Øµ±Ç°µÄÒ³Ãæ
+	//éšè—å½“å‰çš„é¡µé¢
 	CVerticalLayoutUI* active_train_page_main = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("active_train_page_main")));
 	active_train_page_main->SetVisible(false);
+	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
+	pLabelUI->SetText(_T("é£æœºå¤§æˆ˜"));
 
-	//ÕâÀïÎÒÃÇ²»ÒªÌøµ½Õâ¸ölist£¬¶øÊÇÖ±½Óµ÷ÓÃOnGame4
+	//è¿™é‡Œæˆ‘ä»¬ä¸è¦è·³åˆ°è¿™ä¸ªlistï¼Œè€Œæ˜¯ç›´æ¥è°ƒç”¨OnGame4
 	OnGame2(NULL);
 	return true;
 	//CVerticalLayoutUI* active_train_page_list = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("active_train_page_list")));
@@ -3028,6 +3043,9 @@ bool RFMainWindow::OnZhudongBiaoqiang(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
+	pLabelUI->SetText(_T("åˆ€æªä¸å…¥èº²é¿"));
+
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
 		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/biaoqiang/index.html");
@@ -3035,7 +3053,7 @@ bool RFMainWindow::OnZhudongBiaoqiang(void *pParam)
 	}
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
-	game4_start->SetVisible(false);
+	game4_start->SetVisible(true);
 
 	ShowGame4();
 	return true;
@@ -3047,16 +3065,17 @@ bool RFMainWindow::OnZhudongDuimutou(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
+	pLabelUI->SetText(_T("å¼¹çƒæ‰“ç –å—"));
+
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
 		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/duimutou/index.html");
 		game4->SetFile((std::wstring)respath);
-
-		//game4->RunJS("zoom(2.0);");
 	}
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
-	game4_start->SetVisible(false);
+	game4_start->SetVisible(true);
 	ShowGame4();
 	return true;
 }
@@ -3209,13 +3228,13 @@ bool RFMainWindow::OnEvaluation1(void *pParam)
 		return true;
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 	
 	CControlUI* pImage = static_cast<CControlUI*>(m_pm.FindControl(_T("evaluation_history_image")));
 	pImage->SetBkImage(_T("pg_fma_img.png"));
 
 	CLabelUI* pName = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_name")));
-	pName->SetText(_T("FMAÆÀ²â"));
+	pName->SetText(_T("FMAè¯„æµ‹"));
 
 	CLabelUI* pScore = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_score")));
 
@@ -3235,13 +3254,13 @@ bool RFMainWindow::OnEvaluation2(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	CControlUI* pImage = static_cast<CControlUI*>(m_pm.FindControl(_T("evaluation_history_image")));
 	pImage->SetBkImage(_T("pg_mas_img.png"));
 
 	CLabelUI* pName = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_name")));
-	pName->SetText(_T("MASÆÀ²â"));
+	pName->SetText(_T("MASè¯„æµ‹"));
 
 	CLabelUI* pScore = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_score")));
 
@@ -3261,13 +3280,13 @@ bool RFMainWindow::OnEvaluation3(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	CControlUI* pImage = static_cast<CControlUI*>(m_pm.FindControl(_T("evaluation_history_image")));
 	pImage->SetBkImage(_T("pg_yd_img.png"));
 
 	CLabelUI* pName = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_name")));
-	pName->SetText(_T("ÔË¶¯¹¦ÄÜÆÀ²â"));
+	pName->SetText(_T("è¿åŠ¨åŠŸèƒ½è¯„æµ‹"));
 
 	CLabelUI* pScore = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_score")));
 
@@ -3493,10 +3512,10 @@ bool RFMainWindow::OnEVAdd(void *pParam)
 
 	if (m_evalution_type == 1) {
 		CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_add_welcom")));
-		pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+		pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 		pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_add_name")));
-		pLabel->SetText(_T("½¨Á¢FMAÆÀ²â"));
+		pLabel->SetText(_T("å»ºç«‹FMAè¯„æµ‹"));
 
 		m_fma.Reset();
 		m_mas.Reset();
@@ -3506,10 +3525,10 @@ bool RFMainWindow::OnEVAdd(void *pParam)
 		ShowEvaluationAddPage();
 	} else if (m_evalution_type == 2) {
 		CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_add_welcom")));
-		pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+		pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 		pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_add_name")));
-		pLabel->SetText(_T("½¨Á¢MASÆÀ²â"));
+		pLabel->SetText(_T("å»ºç«‹MASè¯„æµ‹"));
 		m_fma.Reset();
 		m_mas.Reset();
 		UpdateEVIndex();
@@ -3518,7 +3537,7 @@ bool RFMainWindow::OnEVAdd(void *pParam)
 		ShowEvaluationAddPage();
 	} else if (m_evalution_type == 3) {
 		CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_ydgn_add_welcom")));
-		pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+		pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 		m_fma.Reset();
 		m_mas.Reset();
@@ -3587,7 +3606,7 @@ void RFMainWindow::ShowEVDetail(std::wstring evid)
 		int id = _wtoi(evid.c_str());
 
 		CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_detail_welcom")));
-		pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+		pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 		RFEvaluationDetailData::get()->Load(id);
 
@@ -3601,7 +3620,7 @@ void RFMainWindow::ShowEVDetail(std::wstring evid)
 		int id = _wtoi(evid.c_str());
 
 		CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_ydgn_detail_welcom")));
-		pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+		pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 		RFEvaluationDetailData::get()->Load(id);
 		ShowEvaluationYDGNDetailPage();
@@ -3628,7 +3647,7 @@ void RFMainWindow::ShowEVDetail(std::wstring evid)
 		wchar_t score[128];
 
 		ZeroMemory(score,sizeof(TCHAR) * 20);
-		_stprintf_s(score,128,_T("×ÛºÏµÃ·Ö£º%.2f¡ã"), m_evydgn.score);
+		_stprintf_s(score,128,_T("ç»¼åˆå¾—åˆ†ï¼š%.2fÂ°"), m_evydgn.score);
 
 		pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_ydgn_detail_score")));
 		pLabel->SetText(score);
@@ -3768,7 +3787,7 @@ bool RFMainWindow::OnEVStop(void *pParam)
 
 	wchar_t temp[128];
 	ZeroMemory(temp,sizeof(TCHAR) * 20);
-	_stprintf_s(temp,128,_T("µÃ·Ö£º%.2f"), m_evydgn.score);
+	_stprintf_s(temp,128,_T("å¾—åˆ†ï¼š%.2f"), m_evydgn.score);
 
 	CLabelUI* plbl = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_ydgn_score")));
 	plbl->SetText(temp);
@@ -3790,7 +3809,7 @@ bool RFMainWindow::OnEVBegin1(void *pParam)
 
 		TCHAR szStartAngle[20];
 		ZeroMemory(szStartAngle,sizeof(TCHAR) * 20);
-		_stprintf_s(szStartAngle,20,_T("%.2f¡ã"),angle[0]);
+		_stprintf_s(szStartAngle,20,_T("%.2fÂ°"),angle[0]);
 		
 		CLabelUI * plbl = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_angle01")));
 		plbl->SetText(szStartAngle);
@@ -3802,7 +3821,7 @@ bool RFMainWindow::OnEVBegin1(void *pParam)
 		
 		TCHAR szStartAngle[20];
 		ZeroMemory(szStartAngle,sizeof(TCHAR) * 20);
-		_stprintf_s(szStartAngle,20,_T("%.2f¡ã"),angle[0]);
+		_stprintf_s(szStartAngle,20,_T("%.2fÂ°"),angle[0]);
 
 		CLabelUI * plbl = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_angle02")));
 		plbl->SetText(szStartAngle);
@@ -3828,7 +3847,7 @@ bool RFMainWindow::OnEVBegin2(void *pParam)
 
 		TCHAR szStartAngle[20];
 		ZeroMemory(szStartAngle,sizeof(TCHAR) * 20);
-		_stprintf_s(szStartAngle,20,_T("%.2f¡ã"),angle[1]);
+		_stprintf_s(szStartAngle,20,_T("%.2fÂ°"),angle[1]);
 
 		CLabelUI * plbl = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_angle11")));
 		plbl->SetText(szStartAngle);
@@ -3840,7 +3859,7 @@ bool RFMainWindow::OnEVBegin2(void *pParam)
 
 		TCHAR szStartAngle[20];
 		ZeroMemory(szStartAngle,sizeof(TCHAR) * 20);
-		_stprintf_s(szStartAngle,20,_T("%.2f¡ã"),angle[1]);
+		_stprintf_s(szStartAngle,20,_T("%.2fÂ°"),angle[1]);
 
 		CLabelUI * plbl = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_angle12")));
 		plbl->SetText(szStartAngle);
@@ -3878,7 +3897,9 @@ void RFMainWindow::ShowLoginPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 	m_current_passivetraininfos.clear();
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 }
@@ -3911,6 +3932,7 @@ void RFMainWindow::ShowLoginSuccessPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	m_current_passivetraininfos.clear();
 
@@ -3946,16 +3968,17 @@ void RFMainWindow::ShowMainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	if (m_current_patient.id > 0) {
-		std::wstring current_patient = _T("ÒÑÑ¡Ôñ»¼Õß ¡¾") + m_current_patient.name + _T("¡¿");
+		std::wstring current_patient = _T("å·²é€‰æ‹©æ‚£è€… ã€") + m_current_patient.name + _T("ã€‘");
 		m_main_tip->SetText(current_patient.c_str());
 	} else {
-		std::wstring current_patient = _T("ÇëÏÈÑ¡ÔñÒ»Ãû»¼ÕßÖ®ºó£¬ÔÙ¼ÌĞøÆäËû²Ù×÷");
+		std::wstring current_patient = _T("è¯·å…ˆé€‰æ‹©ä¸€åæ‚£è€…ä¹‹åï¼Œå†ç»§ç»­å…¶ä»–æ“ä½œ");
 		m_main_tip->SetText(current_patient.c_str());
 	}
 }
@@ -3988,6 +4011,7 @@ void RFMainWindow::ShowSelectPatientPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4003,6 +4027,9 @@ void RFMainWindow::ShowManagerPatientPage()
 	m_patient_select_page->SetVisible(false);
 	m_patient_detail_page->SetVisible(false);
 	m_patient_manager_page->SetVisible(true);
+	CButtonUI* manager_add_patient_save = static_cast<CButtonUI*>(m_pm.FindControl(_T("manager_add_patient_save")));
+	manager_add_patient_save->SetEnabled(true);
+
 	m_patient_edit_page->SetVisible(false);
 	m_about_page->SetVisible(false);
 	m_patient_add_page->SetVisible(false);
@@ -4022,6 +4049,7 @@ void RFMainWindow::ShowManagerPatientPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4056,6 +4084,7 @@ void RFMainWindow::ShowTrainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4090,6 +4119,7 @@ void RFMainWindow::ShowActiveTrainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	CVerticalLayoutUI* active_train_page_main = static_cast<CVerticalLayoutUI*>(m_pm.FindControl(_T("active_train_page_main")));
 	active_train_page_main->SetVisible(true);
@@ -4136,6 +4166,7 @@ void RFMainWindow::ShowPassiveTrainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4170,13 +4201,14 @@ void RFMainWindow::ShowPatientDetail(int page, int index)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_detail_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	PatientInfo patient = RFPatientsManager::get()->getPatient(page, index);
 	
@@ -4259,13 +4291,14 @@ void RFMainWindow::ShowPatientEdit(int patientid)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_bianji_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	PatientInfo patient = RFPatientsManager::get()->getPatient(patientid);
 
@@ -4348,13 +4381,14 @@ void RFMainWindow::ShowPatientEdit(int page, int index)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_bianji_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	PatientInfo patient = RFPatientsManager::get()->getPatient(page, index);
 
@@ -4438,13 +4472,14 @@ void RFMainWindow::ShowPatientAdd(std::wstring patientid)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_add_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	wchar_t field[64] = _T("");
 	CEditUI* pLabel = static_cast<CEditUI*>(m_patient_add_page->FindSubControl(_T("add_patient_id")));
@@ -4512,13 +4547,14 @@ void RFMainWindow::ShowAboutPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("about_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 }
 
@@ -4550,13 +4586,54 @@ void RFMainWindow::ShowPersonorPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("personor_welcom")));
-	pWelecome->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
+
+	UpdatePersonInfo();
+}
+
+void RFMainWindow::ShowSetSystemPage()
+{
+	m_main_page->SetVisible(false);
+	m_patient_select_page->SetVisible(false);
+	m_patient_manager_page->SetVisible(false);
+	m_patient_detail_page->SetVisible(false);
+	m_login_success_page->SetVisible(false);
+	m_login_input_page->SetVisible(false);
+	m_login_page->SetVisible(false);
+	m_patient_edit_page->SetVisible(false);
+	m_about_page->SetVisible(false);
+	m_patient_add_page->SetVisible(false);
+	m_personor_info_edit_page->SetVisible(false);
+	m_train_main_page->SetVisible(false);
+	m_active_train_page->SetVisible(false);
+	m_patient_train_info->SetVisible(false);
+	m_patient_train_detail->SetVisible(false);
+	m_passive_train_page->SetVisible(false);
+	m_eyemode_page->SetVisible(false);
+	m_emgmode_page->SetVisible(false);
+	m_traindetail_chart->SetVisible(false);
+	m_active_train_game4_page->SetVisible(false);
+	m_evaluation_page->SetVisible(false);
+	m_evaluation_history_page->SetVisible(false);
+	m_evaluation_add_page->SetVisible(false);
+	m_evaluation_detail_page->SetVisible(false);
+	m_evaluation_ydgn_add_page->SetVisible(false);
+	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(true);
+
+	StopActiveGameDetect();
+
+	m_current_passivetraininfos.clear();
+
+	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("systemset_welcom")));
+	pWelecome->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	UpdatePersonInfo();
 }
@@ -4589,6 +4666,7 @@ void RFMainWindow::ShowPatientTrainInformation()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4625,13 +4703,14 @@ void RFMainWindow::ShowPatientTrainDetail(std::wstring patientid)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
 	m_current_passivetraininfos.clear();
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("patient_traindetail_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	RFPatientsTrainDetails::get()->SetCurrentPatientID(_wtoi(patientid.c_str()));
 
@@ -4668,6 +4747,7 @@ void RFMainWindow::ShowEyeModeTrainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	RFDialog::m_eyemode_close = true;
 	StopActiveGameDetect();
@@ -4720,6 +4800,7 @@ void RFMainWindow::ShowEmgModeTrainPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4754,6 +4835,7 @@ void RFMainWindow::ShowTrainDataChartPage(int id)
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 
 	StopActiveGameDetect();
 
@@ -4794,6 +4876,7 @@ void RFMainWindow::ShowEvaluationHistoryPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 void RFMainWindow::ShowEvaluationDetailPage()
@@ -4824,6 +4907,7 @@ void RFMainWindow::ShowEvaluationDetailPage()
 	m_evaluation_detail_page->SetVisible(true);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 void RFMainWindow::ShowEvaluationYDGNDetailPage()
@@ -4854,6 +4938,7 @@ void RFMainWindow::ShowEvaluationYDGNDetailPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(true);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 
@@ -4885,6 +4970,7 @@ void RFMainWindow::ShowEvaluationYDGNAddPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(true);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 void RFMainWindow::ShowEvaluationAddPage()
@@ -4915,6 +5001,7 @@ void RFMainWindow::ShowEvaluationAddPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 void RFMainWindow::ShowEvaluationPage()
@@ -4945,6 +5032,7 @@ void RFMainWindow::ShowEvaluationPage()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
+	m_systemset_info_edit_page->SetVisible(false);
 }
 
 void RFMainWindow::ShowGame4()
@@ -4974,7 +5062,7 @@ void RFMainWindow::ShowGame4()
 	m_evaluation_detail_page->SetVisible(false);
 	m_evaluation_ydgn_add_page->SetVisible(false);
 	m_evaluation_ydgn_detail_page->SetVisible(false);
-
+	m_systemset_info_edit_page->SetVisible(false);
 	StartActiveGameDetect();
 }
 
@@ -4985,7 +5073,7 @@ void RFMainWindow::DeletePatient(int patientid)
 	}
 
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("manager_patient_welcom")));
-	pLabel->SetText((_T("»¶Ó­Äú£¬") + m_login_info.login_user + _T("!¡Å")).c_str());
+	pLabel->SetText((_T("æ¬¢è¿æ‚¨ï¼Œ") + m_login_info.login_user + _T("!âˆ¨")).c_str());
 
 	UpdateManagePatientPage(RFPatientsManager::get()->getPage(RFPatientsManager::get()->m_current_page));
 	UpdateManagePageNumber(RFPatientsManager::get()->m_current_page);
@@ -5396,14 +5484,14 @@ LoginInfo RFMainWindow::GetPersonInfo()
 
 void RFMainWindow::UpdateEvaluationScore(std::wstring score)
 {
-	std::wstring text = _T("×î½üµÃ·Ö£º") + score;
+	std::wstring text = _T("æœ€è¿‘å¾—åˆ†ï¼š") + score;
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_history_score")));
 	pLabel->SetText(text.c_str());
 }
 
 void RFMainWindow::UpdateEvaluationDetailScore(std::wstring score)
 {
-	std::wstring text = _T("×ÛºÏµÃ·Ö£º") + score;
+	std::wstring text = _T("ç»¼åˆå¾—åˆ†ï¼š") + score;
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("evaluation_detail_score")));
 	pLabel->SetText(text.c_str());
 }
@@ -6419,7 +6507,7 @@ void RFMainWindow::UpdateTrainDetailPage( std::list<PatientTrainDetails>& detail
 
 void RFMainWindow::SetPassiveTrainProgress(int time, int total, bool playing)
 {
-	//Õâ¸öprogress barÃ»ÓĞ¹¤×÷£¬ÊÇÍâ°ü×Ô¼º¶¨ÒåµÄ£¬ÔËĞĞÁËÖ®ºó»á³ö´í¡£ĞèÒªĞŞ¸Ä¡£
+	//è¿™ä¸ªprogress baræ²¡æœ‰å·¥ä½œï¼Œæ˜¯å¤–åŒ…è‡ªå·±å®šä¹‰çš„ï¼Œè¿è¡Œäº†ä¹‹åä¼šå‡ºé”™ã€‚éœ€è¦ä¿®æ”¹ã€‚
 	//CProgressExUI *pProgress = static_cast<CProgressExUI*>(m_pm.FindControl(_T("passive_train_progress")));
 	//if (pProgress) {
 	//	pProgress->SetProgressTotal(total);
@@ -6603,11 +6691,11 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	}
 
 	std::wstring gameType = game4->RunJS(_T("getGameType();"));
-	if (gameType == RF_GAME_NAME_PLANE_GAOJI || gameType == RF_GAME_NAME_PLANE_ZHONGJI) {
+	/*if (gameType == RF_GAME_NAME_PLANE_GAOJI || gameType == RF_GAME_NAME_PLANE_ZHONGJI) {
 		if (!RFMainWindow::MainWindow->m_robot.m_isActiveModeStart) {
 			return;
 		}
-	}
+	}*/
 
 	bool fire = false;
 	bool t;
@@ -6732,28 +6820,28 @@ void RFMainWindow::SaveEVDataToDB()
 	std::vector<std::wstring> questions;
 	std::vector<double> answers;
 
-	questions.push_back(_T("Öâ²¿ÆğÊ¼½Ç/¡ã"));
+	questions.push_back(_T("è‚˜éƒ¨èµ·å§‹è§’/Â°"));
 	answers.push_back(m_evydgn.zb1);
 
-	questions.push_back(_T("Öâ²¿ÖÕÖ¹½Ç/¡ã"));
+	questions.push_back(_T("è‚˜éƒ¨ç»ˆæ­¢è§’/Â°"));
 	answers.push_back(m_evydgn.zb2);
 
-	questions.push_back(_T("Öâ²¿¹Ø½Ú»î¶¯/¡ã"));
+	questions.push_back(_T("è‚˜éƒ¨å…³èŠ‚æ´»åŠ¨/Â°"));
 	answers.push_back(m_evydgn.zb);
 
-	questions.push_back(_T("¼ç²¿ÆğÊ¼½Ç/¡ã"));
+	questions.push_back(_T("è‚©éƒ¨èµ·å§‹è§’/Â°"));
 	answers.push_back(m_evydgn.jb1);
 
-	questions.push_back(_T("¼ç²¿ÖÕÖ¹½Ç/¡ã"));
+	questions.push_back(_T("è‚©éƒ¨ç»ˆæ­¢è§’/Â°"));
 	answers.push_back(m_evydgn.jb2);
 
-	questions.push_back(_T("¼ç²¿¹Ø½Ú»î¶¯/¡ã"));
+	questions.push_back(_T("è‚©éƒ¨å…³èŠ‚æ´»åŠ¨/Â°"));
 	answers.push_back(m_evydgn.jb);
 
-	questions.push_back(_T("ÖúÁ¦²ÎÊı"));
+	questions.push_back(_T("åŠ©åŠ›å‚æ•°"));
 	answers.push_back(m_evydgn.cs);
 
-	questions.push_back(_T("ÎÕÁ¦/N"));
+	questions.push_back(_T("æ¡åŠ›/N"));
 	answers.push_back(m_evydgn.wl);
 
 	for (int i = 0; i < questions.size(); i++) {
@@ -6856,7 +6944,7 @@ void RFMainWindow::SaveActiveGameDetectData()
 		return;
 	}
 	std::wstring gamename = game4->RunJS(_T("getGameType();"));
-	std::wstring nandu = game4->RunJS(_T("getNandu();"));
+	//std::wstring nandu = game4->RunJS(_T("getNandu();"));
 	std::wstring score = game4->RunJS(_T("getScore();"));
 
 	PatientTrainDetails details;
@@ -6866,9 +6954,9 @@ void RFMainWindow::SaveActiveGameDetectData()
 	details.traintype = RF_TRAINTYPE_STRING_ZD;
 	details.content = RF_TRAINTYPE_STRING_ZD;
 	details.content += _T("-");
-	details.content += gamename;
-	details.content += _T("-");
-	details.content += nandu;
+	details.content += gamename; 
+	//details.content += _T("-");
+	//details.content += nandu;
 	details.content += _T("-");
 	details.content += score;
 	details.duration = RFToTimeString(s_active_game4_start) + _T("-") + RFToTimeString(s_active_game4_stop);
@@ -6931,7 +7019,7 @@ std::wstring GetSaveFilePath(HWND hWnd)
 	ofn.lpstrInitialDir = NULL;
 	ofn.nFileExtension = 0;
 	ofn.lpstrDefExt = L"xlsx";
-	ofn.lpstrTitle = L"±£´æÎÄ¼ş";
+	ofn.lpstrTitle = L"ä¿å­˜æ–‡ä»¶";
 	ofn.Flags = OFN_OVERWRITEPROMPT;
 
 	GetSaveFileName(&ofn);
@@ -6955,7 +7043,7 @@ int GetFilesFromDialog(HWND wnd, std::vector<std::wstring>& files, const wchar_t
 	ofn.nMaxFile = buffer_size;
 	ofn.lpstrFileTitle = 0;
 	ofn.lpstrInitialDir = NULL;
-	ofn.lpstrTitle = L"ÇëÑ¡ÔñÎÄ¼ş";
+	ofn.lpstrTitle = L"è¯·é€‰æ‹©æ–‡ä»¶";
 	ofn.Flags = flags;
 
 	std::wstring dir;
