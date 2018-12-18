@@ -52,7 +52,7 @@ void RFPatientsManager::setDoctorID(int id)
 
 int RFPatientsManager::step(int deletenum)
 {
-	if (m_current_group < 0 || (m_patients.size() - 1) / PATIENT_GROUP_NUMBER < (m_current_group + 1)) {
+	if (m_current_group < 0 || m_patients.empty() || (m_patients.size() - 1) / PATIENT_GROUP_NUMBER < (m_current_group + 1)) {
 		LoadPatientParam *pParam = new LoadPatientParam();
 
 		pParam->hospitalid = m_hospitalid;

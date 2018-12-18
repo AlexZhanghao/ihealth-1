@@ -143,7 +143,7 @@ int RFMySQLThread::Connect(EventArg *pArg)
 	pupiltracker::ConfigFile cgf;
 	cgf.read("../../resource/params/mysql.cfg");
 
-	if (pCurrentThread->m_db.Open(cgf.get<std::string>("ip").c_str(), cgf.get<std::string>("user").c_str(), cgf.get<std::string>("password").c_str(), "instruments", 3306) < 0)
+	if (pCurrentThread->m_db.Open(cgf.get<std::string>("ip").c_str(), cgf.get<std::string>("user").c_str(), cgf.get<std::string>("password").c_str(), "ihealth", 3306) < 0)
 	{
 		CTask::Assign(CTask::NotWait, Panic(), NULL, EventHandle(&RFMainWindow::OnConnectFail), pCurrentThread, RFMainWindow::UIThread);
 		return 1;
@@ -700,6 +700,12 @@ int RFMySQLThread::NextPatientID(EventArg* pArg)
 
 	NextPatientResult *pResult = new NextPatientResult;
 	pResult->patientid = _T("-1");
+
+	// to fetch auto_increment directly from engine, not cache
+	RFMYSQLStmt s;
+	if (s.Prepare(RFMainWindow::DBThread->m_db, "SET @@SESSION.information_schema_stats_expiry = 0") < 0) {
+		TRACE("set expiry = 0 error\n");
+	}
 
 	RFMYSQLStmt stmt;
 	if (stmt.Prepare(RFMainWindow::DBThread->m_db, "SELECT AUTO_INCREMENT FROM information_schema.tables where TABLE_NAME='patient'") > 0) {

@@ -107,7 +107,7 @@ RFMYSQLStmt::~RFMYSQLStmt()
 
 int RFMYSQLStmt::Prepare(RFMYSQL& db, const char *sql)
 {
-	if (!db._db || !sql) {
+ 	if (!db._db || !sql) {
 		return -1;
 	}
 
@@ -119,7 +119,7 @@ int RFMYSQLStmt::Prepare(RFMYSQL& db, const char *sql)
 	if (!_res) {
 		return -1;
 	}
-	
+
 	return 1;
 }
 
