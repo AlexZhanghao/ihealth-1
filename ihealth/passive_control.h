@@ -5,7 +5,6 @@
 #include"active_control.h"
 #include <vector>
 #include <queue>
-//#include <mutex>
 #include <string>
 #include <vector>
 
@@ -44,6 +43,7 @@ public:
 	void Set_hWnd(HWND hWnd);
 
 public:
+	void SetActiveControl(activecontrol *p);
 	bool isBeginTeach;
 	//判断是否在初始位置
 	bool isInInitPos;

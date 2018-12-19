@@ -29,15 +29,14 @@ PassiveControl::PassiveControl()
     PASVHermite_time=0;
 	defaultCycleTime =16;
 	bDetect = NULL;
-	activectrl = NULL;
-	activectrl = new activecontrol;
 	//init();
 }
 
+void PassiveControl::SetActiveControl(activecontrol *p) {
+	activectrl = p;
+}
+
 PassiveControl::~PassiveControl() {
-	if (activectrl != NULL) {
-		delete activectrl;
-	}
 }
 
 void PassiveControl::AddCurrentTeachToData() {

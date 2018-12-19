@@ -10,23 +10,24 @@
 MMRESULT Mtimer_ID=0;
 UINT wAccuracy=0;
 
-robot::robot()
-{
-	bDetect = NULL;
-	bDetect = new boundaryDetection;
+robot::robot() {
+	bDetect = nullptr;
+	bDetect = new boundaryDetection();
 	bDetect->SetRobot(this);
 
-	pasvMode = NULL;
-	pasvMode = new PassiveControl;
+	activeCtrl = nullptr;
+	activeCtrl = new activecontrol();
+
+	pasvMode = nullptr;
+	pasvMode = new PassiveControl();
+	pasvMode->SetActiveControl(activeCtrl);
 	
 	ControlCard::GetInstance().Initial();
 
-	activeCtrl = NULL;
-	activeCtrl = new activecontrol;
-	EMGContrl = NULL;
-	EMGContrl = new emgcontrl;
+	EMGContrl = nullptr;
+	EMGContrl = new emgcontrl();
 
-	eyeModeCtl = NULL;
+	eyeModeCtl = nullptr;
 	eyeModeCtl = new EyeMode(bDetect);
 	
 	pasvMode->m_boundary_detection = bDetect;
