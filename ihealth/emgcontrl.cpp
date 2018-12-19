@@ -88,7 +88,7 @@ void emgcontrl::stop()
 {
      //qDebug()<<"EMG  Stoped!";
 	//结束跟随运动
-	 stopMove();
+	 StopMove();
 	 isStopThread = true;
 
 }
@@ -114,7 +114,7 @@ void emgcontrl::beginMove()
 	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
     isBeginMove=true;
 }
-void emgcontrl::stopMove() {
+void emgcontrl::StopMove() {
 	ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
 	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOff);
     isBeginMove=false;

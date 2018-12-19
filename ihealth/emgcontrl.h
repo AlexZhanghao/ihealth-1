@@ -13,7 +13,7 @@ public:
     void stop();
     double getRawData(int index=0);
     void beginMove();
-    void stopMove();
+    void StopMove();
 	bool isStopThread;
 	void acquistRawData();//获取EMG sensor数据
     void emgContrl();

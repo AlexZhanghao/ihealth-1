@@ -30,21 +30,19 @@ static const int kPlaneMaxY = 601;
 static const double kShoulderAngleMax = 40;
 static const double kElbowAngleMax = 40;
 
-activecontrol::activecontrol() {
+ActiveControl::ActiveControl() {
 	m_hThread = 0;
-	m_stop = false;
-	isMove = false;
-	for (int i = 0; i<2; i++)
-		cmdVel[i] = 0;
+	is_exit_thread_ = false;
+	is_moving_ = false;
 }
 
-activecontrol:: ~activecontrol() {
+ActiveControl:: ~ActiveControl() {
 	//DataAcquisition::GetInstance().StopTask();
 }
 
 unsigned int __stdcall FTSThreadFun(PVOID pParam)
 {
-	activecontrol *FTS = (activecontrol*)pParam;
+	ActiveControl *FTS = (ActiveControl*)pParam;
 	UINT oldTickCount, newTickCount;
 	oldTickCount = GetTickCount();
 
@@ -52,48 +50,40 @@ unsigned int __stdcall FTSThreadFun(PVOID pParam)
 	double buf[6]{ 0.0 };
 	for (int i = 0;i < 10;++i) {
 		DataAcquisition::GetInstance().AcquisiteSixDemensionData(buf);
-		//printf("sixdata %lf    %lf    %lf    %lf    %lf    %lf \n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
 
 		for (int j = 0;j < 6;++j) {
 			sum[j] += buf[j];
 		}
 	}
 	for (int i = 0;i < 6;++i) {
-		FTS->m_six_dimension_offset[i] = sum[i] / 10;
+		FTS->six_dimension_offset_[i] = sum[i] / 10;
 	}
-
-	//printf("bias %lf    %lf    %lf    %lf    %lf    %lf \n", FTS->m_six_dimension_offset[0], FTS->m_six_dimension_offset[1], FTS->m_six_dimension_offset[2], FTS->m_six_dimension_offset[3], FTS->m_six_dimension_offset[4], FTS->m_six_dimension_offset[5]);
-	//printf("sum %lf    %lf    %lf    %lf    %lf    %lf \n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
-
 	DataAcquisition::GetInstance().StopTask();
 	DataAcquisition::GetInstance().StartTask();
 
 	while (TRUE) {
-		if (FTS->m_stop) {
-			//DataAcquisition::GetInstance().StopTask();
+		if (FTS->is_exit_thread_) {
 			break;
 		}
 
 		//延时 BOYDET_TIME s
-		while (TRUE)
-		{
+		while (TRUE) {
 			newTickCount = GetTickCount();
-			if (newTickCount - oldTickCount >= FTS_TIME * 1000)
-			{
+			if (newTickCount - oldTickCount >= FTS_TIME * 1000) {
 				oldTickCount = newTickCount;
 				break;
-			}
-			else
+			} else {
 				SwitchToThread();
+			}
 		}
 
-		FTS->timerAcquisit();
+		FTS->Step();
 
 	}
 	//std::cout << "FTSThreadFun Thread ended." << std::endl;
 	return 0;
 }
-void activecontrol::startAcquisit()
+void ActiveControl::MoveInNewThread()
 {
 	//qDebug()<<"activecontrol  Start!";
 	/*    mFTWrapper.LoadCalFile();
@@ -101,12 +91,12 @@ void activecontrol::startAcquisit()
 	mFTWrapper.setFUnit();
 	mFTWrapper.setTUnit();
 	*/
-	m_stop = false;
+	is_exit_thread_ = false;
 
 	m_hThread = (HANDLE)_beginthreadex(NULL, 0, FTSThreadFun, this, 0, NULL);
 }
-void activecontrol::stopAcquisit() {
-	m_stop = true;
+void ActiveControl::ExitMoveThread() {
+	is_exit_thread_ = true;
 
 	if (m_hThread != 0) {
 		::WaitForSingleObject(m_hThread, INFINITE);
@@ -114,21 +104,21 @@ void activecontrol::stopAcquisit() {
 	}
 }
 
-void activecontrol::startMove() {
+void ActiveControl::StartMove() {
 	ControlCard::GetInstance().SetMotor(ControlCard::MotorOn);
 	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
-	isMove = true;
-	startAcquisit();
+	is_moving_ = true;
+	MoveInNewThread();
 }
 
-void activecontrol::stopMove() {
+void ActiveControl::StopMove() {
 	//这里不放开离合的原因是为了防止中间位置松开离合导致手臂迅速下坠
 	ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
-	isMove = false;
-	stopAcquisit();
+	is_moving_ = false;
+	ExitMoveThread();
 }
 
-void activecontrol::timerAcquisit() {
+void ActiveControl::Step() {
 	double readings[6] = { 0 };
 	double distData[6] = { 0 };
 	double filtedData[6] = { 0 };
@@ -140,7 +130,7 @@ void activecontrol::timerAcquisit() {
 
 
 	for (int i = 0; i < 6; ++i) {
-		sub_bias[i] = readings[i] - m_six_dimension_offset[i];
+		sub_bias[i] = readings[i] - six_dimension_offset_[i];
 	}
 
 	sub_bias[2] = -sub_bias[2];
@@ -156,13 +146,13 @@ void activecontrol::timerAcquisit() {
 	Raw2Trans(sub_bias, distData);
 	Trans2Filter(distData, filtedData);
 	FiltedVolt2Vel(filtedData);
-	if (isMove) {
-		FTSContrl();
+	if (is_moving_) {
+		ActMove();
 	}
 
 	//qDebug()<<"readings is "<<filtedData[0]<<" "<<filtedData[1]<<" "<<filtedData[2]<<" "<<filtedData[3]<<" "<<filtedData[4]<<" "<<filtedData[5];
 }
-void activecontrol::Raw2Trans(double RAWData[6], double DistData[6])
+void ActiveControl::Raw2Trans(double RAWData[6], double DistData[6])
 {
 	//这一段就是为了把力从六维力传感器上传到手柄上，这里的A就是总的一个转换矩阵。
 	//具体的旋转矩阵我们要根据六维力的安装确定坐标系方向之后然后再确定。
@@ -214,7 +204,7 @@ void activecontrol::Raw2Trans(double RAWData[6], double DistData[6])
 	//printf("handle fx:%lf    fy:%lf    fz:%lf \n Mx:%lf    My:%lf    Mz:%lf \n", DistData[3], DistData[4], DistData[5], DistData[0], DistData[1], DistData[2]);
 }
 
-void activecontrol::Trans2Filter(double TransData[6], double FiltedData[6]) {
+void ActiveControl::Trans2Filter(double TransData[6], double FiltedData[6]) {
 	double Wc = 5;
 	double Ts = 0.1;
 	static int i = 0;
@@ -256,7 +246,7 @@ void activecontrol::Trans2Filter(double TransData[6], double FiltedData[6]) {
 	//printf("fx:%lf    fy:%lf    fz:%lf \n Mx:%lf    My:%lf    Mz:%lf \n", FiltedData[3], FiltedData[4], FiltedData[5], FiltedData[0], FiltedData[1], FiltedData[2]);
 }
 
-void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
+void ActiveControl::FiltedVolt2Vel(double FiltedData[6]) {
 	MatrixXd Vel(2, 1);
 	MatrixXd Pos(2, 1);
 	MatrixXd A(6, 6);
@@ -312,45 +302,23 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	//printf("肩部速度: %lf\n", Ud_Shoul);
 	//printf("肘部速度: %lf\n", Ud_Arm);
 }
-void activecontrol::FTSContrl() {
+void ActiveControl::ActMove() {
 	ControlCard::GetInstance().ProtectedVelocityMove(ControlCard::ShoulderAxisId, Ud_Shoul);
 	ControlCard::GetInstance().ProtectedVelocityMove(ControlCard::ElbowAxisId, Ud_Arm);
 }
 
-double activecontrol::getWirstForce()
-{
-	bool fireOrNot = false;
-	int32       error = 0;
-	TaskHandle  taskHandle = 0;
-	int32       read;
-	float64     data[100] = { -1 };
-	for (int i = 0; i < 100; i++) {
-		data[i] = -1;
-	}
-	DAQmxCreateTask("", &taskHandle);
-	DAQmxCreateAIVoltageChan(taskHandle, FCH, "", DAQmx_Val_RSE, 0, 10.0, DAQmx_Val_Volts, NULL);
-	DAQmxCfgSampClkTiming(taskHandle, "", 1000, DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, 100);
-	DAQmxStartTask(taskHandle);
-	DAQmxReadAnalogF64(taskHandle, 100, 10.0, DAQmx_Val_GroupByChannel, data, 100, &read, NULL);
-	DAQmxStopTask(taskHandle);
-	DAQmxClearTask(taskHandle);
-
-	return data[50] * 20;
-}
-
-bool activecontrol::isFire()
-{
-	bool fireOrNot = false;
+bool ActiveControl::IsFire() {
+	bool fire = false;
 
 	double grip;
 	//这里就是采集握力的数据
 	DataAcquisition::GetInstance().AcquisiteGripData(&grip);
 	if (grip > 0.1)
-		fireOrNot = true;
-	return fireOrNot;
+		fire = true;
+	return fire;
 }
 
-void activecontrol::getEndsXY(short rangeX, short rangeY, double XY[2]) {
+void ActiveControl::CalculatePlaneXY(short rangeX, short rangeY, double XY[2]) {
 	//MatrixXd Theta(5, 1);
 	//MatrixXd T0h(4, 4);
 	//VectorXd Pos(2);
@@ -388,10 +356,9 @@ void activecontrol::getEndsXY(short rangeX, short rangeY, double XY[2]) {
 	y = std::max<double>(std::min<double>(y, 0.3), 0);
 	XY[0] = (x / 0.3)*rangeX;
 	XY[1] =(1 - 0.3 * y / 0.3)*rangeY;*/
-
 }
 
-void activecontrol::setDamping(float FC)
+void ActiveControl::SetDamping(float FC)
 {
 	Force_Fc = FC;
 }

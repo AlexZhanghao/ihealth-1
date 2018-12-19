@@ -43,7 +43,7 @@ public:
 	void Set_hWnd(HWND hWnd);
 
 public:
-	void SetActiveControl(activecontrol *p);
+	void SetActiveControl(ActiveControl *p);
 	bool isBeginTeach;
 	//判断是否在初始位置
 	bool isInInitPos;
@@ -66,7 +66,7 @@ private:
     int timecount;
     double PASVHermite_time;
 	boundaryDetection * bDetect;
-	activecontrol *activectrl;
+	ActiveControl *activectrl;
 	Teach currentTeach;
 	Teach moveTeach;
 	Teach moveSample;

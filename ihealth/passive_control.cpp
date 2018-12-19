@@ -32,7 +32,7 @@ PassiveControl::PassiveControl()
 	//init();
 }
 
-void PassiveControl::SetActiveControl(activecontrol *p) {
+void PassiveControl::SetActiveControl(ActiveControl *p) {
 	activectrl = p;
 }
 
@@ -253,7 +253,7 @@ double PassiveControl::PHermite(double foretime[2],double forepos[2],double fore
 }
 void PassiveControl::StartTeach() {
 	if (!isMoving) {		
-		activectrl->startMove();
+		activectrl->StartMove();
 		isBeginTeach = true;
 		isStopThread = false;
 
@@ -274,7 +274,7 @@ void PassiveControl::StartTeach() {
 }
 
 void PassiveControl::StopTeach() {
-	activectrl->stopMove();
+	activectrl->StopMove();
 	isBeginTeach = false;
 	isStopThread = true;
 	isMoving = false;

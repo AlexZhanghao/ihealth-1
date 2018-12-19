@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 
+#include "data_acquisition.h"
 #include "Log.h"
 
 #pragma comment(lib,"winmm.lib")
@@ -16,7 +17,7 @@ robot::robot() {
 	bDetect->SetRobot(this);
 
 	activeCtrl = nullptr;
-	activeCtrl = new activecontrol();
+	activeCtrl = new ActiveControl();
 
 	pasvMode = nullptr;
 	pasvMode = new PassiveControl();
@@ -120,7 +121,7 @@ void robot::addPasvMove()
 }
 void robot::startActiveMove() {
 	if (!m_isActiveModeStart) {
-		activeCtrl->startMove();
+		activeCtrl->StartMove();
 		m_isActiveModeStart = true;
 	}
 }
@@ -129,7 +130,7 @@ void robot::stopActiveMove()
 {
 	//if (ctrlCard->IsCardInitial()) {
 	if (m_isActiveModeStart) {
-		activeCtrl->stopMove();
+		activeCtrl->StopMove();
 		m_isActiveModeStart = false;
 	}
 	//}
@@ -138,30 +139,27 @@ void robot::getAngle(double angles[2])
 {
 }
 
-double robot::getWirstForce()
-{
+double robot::getWirstForce() {
 	double output;
-	
-	output = activeCtrl->getWirstForce();
-	
+	DataAcquisition::GetInstance().AcquisiteGripData(&output);
 	return output;
 }
 bool robot::isFire()
 {
 	//if (ctrlCard->IsCardInitial()) {
-		return activeCtrl->isFire();
+		return activeCtrl->IsFire();
 	//}
 	//return false;
 }
 
 void robot::getPlanePos(short w, short h, double XY[2])
 {
-	activeCtrl->getEndsXY(w, h, XY);
+	activeCtrl->CalculatePlaneXY(w, h, XY);
 }
 
 void robot::setDamping(float FC/* =0.1 */)
 {
-	activeCtrl->setDamping(FC);
+	activeCtrl->SetDamping(FC);
 }
 
 

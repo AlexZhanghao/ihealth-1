@@ -81,7 +81,7 @@ public:
 public:
 	PassiveControl *pasvMode;//被动控制模式
 	boundaryDetection *bDetect;//边界检测
-	activecontrol *activeCtrl;
+	ActiveControl *activeCtrl;
 	emgcontrl *EMGContrl;
 	EyeMode *eyeModeCtl;
 	

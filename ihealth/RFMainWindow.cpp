@@ -6722,10 +6722,10 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 			game4->RunJS(_T("fire();"));
 		}
 	} else if (gameType == RF_GAME_NAME_BIAOQIANG) {
-		int wirstForce = (int)RFMainWindow::MainWindow->m_robot.getWirstForce();
-		if (wirstForce > 0 && wirstForce < 200) {
+		int grip_strength = (int)RFMainWindow::MainWindow->m_robot.getWirstForce();
+		if (grip_strength > 0 && grip_strength < 200) {
 			wchar_t v[128];
-			wsprintf(v, _T("(%d);"), wirstForce);
+			wsprintf(v, _T("(%d);"), grip_strength);
 			std::wstring jsAction = _T("fire");
 			jsAction += v;
 			game4->RunJS(jsAction);
