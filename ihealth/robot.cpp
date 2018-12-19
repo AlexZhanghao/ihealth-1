@@ -253,10 +253,10 @@ void getSensorData(bool Travel_Switch[4])
 {
 	I32 DI_Group = 0; // If DI channel less than 32
 	I32 DI_Data = 0; // Di data
-	I32 di_ch[InputChannels];
+	I32 di_ch[ControlCard::InputChannels];
 	I32 returnCode = 0; // Function return code
 	returnCode = APS_read_d_input(0, DI_Group, &DI_Data);
-	for (int i = 0; i < InputChannels; i++)
+	for (int i = 0; i < ControlCard::InputChannels; i++)
 		di_ch[i] = ((DI_Data >> i) & 1);
 
 	Travel_Switch[0] = di_ch[16];//0号电机ORG信号-肘部电机

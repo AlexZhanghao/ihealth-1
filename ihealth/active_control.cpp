@@ -8,10 +8,6 @@
 #include "Log.h"
 #include "data_acquisition.h"
 
-LARGE_INTEGER timeStart;
-LARGE_INTEGER timeEnd;
-LARGE_INTEGER frequency;
-double quadpart;
 
 #define FTS_TIME 0.1
 using namespace Eigen;
@@ -51,17 +47,6 @@ unsigned int __stdcall FTSThreadFun(PVOID pParam)
 	activecontrol *FTS = (activecontrol*)pParam;
 	UINT oldTickCount, newTickCount;
 	oldTickCount = GetTickCount();
-
-	QueryPerformanceFrequency(&frequency);
-	quadpart = (double)frequency.QuadPart;
-
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
-
-
-	//start acquisition
-	//DataAcquisition::GetInstance().StopTask();
-	//DataAcquisition::GetInstance().StartTask();
 
 	double sum[6]{ 0.0 };
 	double buf[6]{ 0.0 };
@@ -130,15 +115,15 @@ void activecontrol::stopAcquisit() {
 }
 
 void activecontrol::startMove() {
-	ControlCard::GetInstance().SetMotor(MotorOn);
-	ControlCard::GetInstance().SetClutch(ClutchOn);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOn);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
 	isMove = true;
 	startAcquisit();
 }
 
 void activecontrol::stopMove() {
 	//这里不放开离合的原因是为了防止中间位置松开离合导致手臂迅速下坠
-	ControlCard::GetInstance().SetMotor(MotorOff);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
 	isMove = false;
 	stopAcquisit();
 }
@@ -150,11 +135,8 @@ void activecontrol::timerAcquisit() {
 	double bias[6] = { 0 };
 	double sub_bias[6] = { 0 };
 
-	QueryPerformanceCounter(&timeStart);
 	DataAcquisition::GetInstance().AcquisiteSixDemensionData(readings);
-	QueryPerformanceCounter(&timeEnd);
 
-	//cout << "elapsed time is : " << (timeEnd.QuadPart - timeStart.QuadPart) * 1000 / quadpart << " ms" << endl;
 
 
 	for (int i = 0; i < 6; ++i) {
@@ -331,8 +313,8 @@ void activecontrol::FiltedVolt2Vel(double FiltedData[6]) {
 	//printf("肘部速度: %lf\n", Ud_Arm);
 }
 void activecontrol::FTSContrl() {
-	ControlCard::GetInstance().ProtectedVelocityMove(ShoulderAxisId, Ud_Shoul);
-	ControlCard::GetInstance().ProtectedVelocityMove(ElbowAxisId, Ud_Arm);
+	ControlCard::GetInstance().ProtectedVelocityMove(ControlCard::ShoulderAxisId, Ud_Shoul);
+	ControlCard::GetInstance().ProtectedVelocityMove(ControlCard::ElbowAxisId, Ud_Arm);
 }
 
 double activecontrol::getWirstForce()

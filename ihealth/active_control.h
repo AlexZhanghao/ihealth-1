@@ -17,19 +17,18 @@ public:
     void stopAcquisit();
     void startMove();
     void stopMove();
-
 	void timerAcquisit();
-
 	double getWirstForce();
 	bool isFire();
 	//获取机器人末端位置
 	void getEndsXY(short Axis_X, short Axis_Y, double XY[2]);
 	void setDamping(float FC=0.1);
 
+public:
 	bool m_stop;
 	bool isMove;
-
 	double m_six_dimension_offset[6];
+
 private:
     FTWrapper mFTWrapper;
     //力控模式算出的命令速度

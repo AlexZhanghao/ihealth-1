@@ -39,12 +39,8 @@ void emgcontrl::acquistRawData()
 		 ReleaseMutex(dataMutex);
      }
 
-	 double raw_arm = 0;
-	 double raw_shoulder = 0;
-	 APS_get_position_f(ElbowAxisId, &raw_arm);
-	 APS_get_position_f(ShoulderAxisId, &raw_shoulder);
-	 pRawData[4] = raw_shoulder*Unit_Convert;
-	 pRawData[5] = raw_arm*Unit_Convert;
+
+	 ControlCard::GetInstance().GetEncoderData(&pRawData[4]);
 
 	 ::PostMessage(m_hWnd, 2050, NULL, (LPARAM)pRawData);
 }
@@ -114,13 +110,13 @@ double emgcontrl::getRawData(int index)
 }
 void emgcontrl::beginMove()
 {
-	ControlCard::GetInstance().SetMotor(MotorOn);
-	ControlCard::GetInstance().SetClutch(ClutchOn);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOn);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
     isBeginMove=true;
 }
 void emgcontrl::stopMove() {
-	ControlCard::GetInstance().SetMotor(MotorOff);
-	ControlCard::GetInstance().SetClutch(ClutchOff);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOff);
     isBeginMove=false;
 }
 void emgcontrl::emgContrl()
@@ -139,7 +135,7 @@ void emgcontrl::emgContrl()
     double elbowVel=RawData[0]-RawData[1];
     double shoulderVel=RawData[2]-RawData[3];
 	ReleaseMutex(dataMutex);
-	ControlCard::GetInstance().VelocityMove(ShoulderAxisId, shoulderVel);
-	ControlCard::GetInstance().VelocityMove(ElbowAxisId, elbowVel);
+	ControlCard::GetInstance().VelocityMove(ControlCard::ShoulderAxisId, shoulderVel);
+	ControlCard::GetInstance().VelocityMove(ControlCard::ElbowAxisId, elbowVel);
 }
 

@@ -35,15 +35,15 @@ EyeMode::~EyeMode()
 
 void EyeMode::start()
 {
-	ControlCard::GetInstance().SetClutch(ClutchOn);
-	ControlCard::GetInstance().SetMotor(MotorOn);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOn);
 	isSendingData = true;
 }
 
 void EyeMode::stop()
 {
 	if (isSendingData) {
-		ControlCard::GetInstance().SetMotor(MotorOff);
+		ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
 	}
 	isSendingData = false;
 }
@@ -155,15 +155,8 @@ unsigned int __stdcall EyeThread(PVOID pParam)
 		rightCam.read(*(eyeMode->pRightEye));
 
 		double currentAngles[2];
-		double raw_arm = 0;
-		double  raw_shoulder = 0;
-		APS_get_position_f(ElbowAxisId, &raw_arm);
-		APS_get_position_f(ShoulderAxisId, &raw_shoulder);
-		currentAngles[0] = -raw_shoulder*Unit_Convert;
-		currentAngles[1] = -raw_arm*Unit_Convert;
-		//double currentAngles[2]; 
-		//eyeMode->pBound->getEncoderData();
-		//currentAngles = eyeMode->pBound->getAngle();
+		ControlCard::GetInstance().GetEncoderData(currentAngles);
+
 		if (!eyeMode->isRunning) {
 			break;
 		}
@@ -189,8 +182,8 @@ unsigned int __stdcall EyeThread(PVOID pParam)
 				elbowSwitch[i] = swithData[i];
 				shoulderSwitch[i] = swithData[2 + i];
 			}
-			ControlCard::GetInstance().VelocityMove(ElbowAxisId, velocity[1]);
-			ControlCard::GetInstance().VelocityMove(ShoulderAxisId, velocity[0]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ElbowAxisId, velocity[1]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ShoulderAxisId, velocity[0]);
 			char message_tracing[1024];
 			sprintf(message_tracing, "In eyectrl Mode output elbow Vel is %0.2f,elbow Swith is %d-%d", velocity[1], elbowSwitch[0], elbowSwitch[1]);
 			LOG1(message_tracing);

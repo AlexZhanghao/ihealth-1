@@ -1,9 +1,10 @@
 ﻿#include "control_card.h"
-
 #include <cmath>
+#include "pupiltracker/utils.h"
 
 using namespace std;
 
+const double ControlCard::Unit_Convert = 0.009;
 const double ControlCard::ResetVel = -4.0;
 const double ControlCard::MaxVel = 5.0;
 const double ControlCard::kElbowLimitInDegree = 50.0;
@@ -25,6 +26,16 @@ ControlCard::ControlCard()
 	at_elbow_zero_(false),
 	at_elbow_limit_(false),
 	emergency_stop_status_(true) {
+	LoadParamFromFile();
+}
+
+void ControlCard::LoadParamFromFile() {
+	string path("../../resource/params/control_card.cfg");
+	pupiltracker::ConfigFile cfg;
+	cfg.read(path);
+	
+	direction_positive_ = cfg.get<int>("direction_positive");
+	direction_negative_ = 1 - direction_positive_;
 }
 
 ControlCard::~ControlCard() {}
@@ -113,17 +124,10 @@ void ControlCard::VelMove(short AxisId, double Vel) {
 		afterConvert = MaxVel / Unit_Convert;
 	}
 
-	////如果电机没开，打开电机
-	//if (!axis_status_)
-	//	SetMotor(MotorOn);
-	////如果离合器没开，打开离合器
-	//if (!clutch_status_)
-	//	SetClutch(ClutchOn);
-
 	if (Vel > 0) {
-		APS_vel(AxisId, 0, afterConvert, 0);
+		APS_vel(AxisId, direction_positive_, afterConvert, 0);
 	} else {
-		APS_vel(AxisId, 1, afterConvert, 0);
+		APS_vel(AxisId, direction_negative_, afterConvert, 0);
 	}
 }
 

@@ -143,8 +143,8 @@ void PassiveControl::BeginMove(int index) {
 	}
 	
 	//打开电机，离合器
-	ControlCard::GetInstance().SetMotor(MotorOn);
-	ControlCard::GetInstance().SetClutch(ClutchOn);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOn);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOn);
 	//关闭示教采集功能
 	isBeginTeach = false;
 	//打开线程
@@ -157,9 +157,9 @@ void PassiveControl::BeginMove(int index) {
 }
 void PassiveControl::StopMove() {
 	//关闭电机
-	ControlCard::GetInstance().SetMotor(MotorOff);
+	ControlCard::GetInstance().SetMotor(ControlCard::MotorOff);
 	//关闭离合器
-	ControlCard::GetInstance().SetClutch(ClutchOff);
+	ControlCard::GetInstance().SetClutch(ControlCard::ClutchOff);
     //关闭线程
 	isbeginMove = false;
 	isStopThread = true;
@@ -201,32 +201,32 @@ void PassiveControl::OnPASVHermite(double PosArm,double PosShoul,double Time) {
 			
             arm_motor_cmd=PHermite(time_forwrd,armpos_forwrd,vel_forwrd,PASVHermite_time);
 			cmdVel[1] = (arm_motor_cmd - joint_angle[1])/TIMER_SLEEP;
-			ControlCard::GetInstance().VelocityMove(ElbowAxisId, cmdVel[1]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ElbowAxisId, cmdVel[1]);
             //APS_absolute_move(elbowAxisId,arm_motor_cmd/Unit_Convert,15/Unit_Convert);
 
 
             shoul_motor_cmd=PHermite(time_forwrd,shoulpos_forwrd,vel_forwrd,PASVHermite_time);
 			cmdVel[0] = (shoul_motor_cmd - joint_angle[0]) / TIMER_SLEEP;
-			ControlCard::GetInstance().VelocityMove(ShoulderAxisId, cmdVel[0]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ShoulderAxisId, cmdVel[0]);
             //APS_absolute_move(shoudlerAxisId,shoul_motor_cmd/Unit_Convert,15/Unit_Convert);
 
         }
 		else if ((PASVHermite_time > Time)&&(PASVHermite_time<(Time + 2)))
 		{
-			APS_stop_move(ElbowAxisId);
-			APS_stop_move(ShoulderAxisId);
+			APS_stop_move(ControlCard::ElbowAxisId);
+			APS_stop_move(ControlCard::ShoulderAxisId);
 		}
         else if((PASVHermite_time<=(Time*2+2))&&(PASVHermite_time>=(Time+2)))
         {
             arm_motor_cmd=PHermite(time_back,armpos_back,vel_back,PASVHermite_time);
 			cmdVel[1] = (arm_motor_cmd - joint_angle[1]) / TIMER_SLEEP;
-			ControlCard::GetInstance().VelocityMove(ElbowAxisId, cmdVel[1]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ElbowAxisId, cmdVel[1]);
             //APS_absolute_move(elbowAxisId,arm_motor_cmd/Unit_Convert,15/Unit_Convert);
 
 
             shoul_motor_cmd=PHermite(time_back,shoulpos_back,vel_back,PASVHermite_time);
 			cmdVel[0] = (shoul_motor_cmd - joint_angle[0]) / TIMER_SLEEP;
-			ControlCard::GetInstance().VelocityMove(ShoulderAxisId, cmdVel[0]);
+			ControlCard::GetInstance().VelocityMove(ControlCard::ShoulderAxisId, cmdVel[0]);
             //APS_absolute_move(shoudlerAxisId,shoul_motor_cmd/Unit_Convert,15/Unit_Convert);
 
         }
@@ -317,7 +317,7 @@ void PassiveControl::Move_Sample()
 //这个函数是对目标点进行插值，然后根据插值的位置进行运动
 void PassiveControl::TeachCtrl() {
 	double Teach_Time = loop_count*0.1;
-	I32 Axis[2] = { ShoulderAxisId, ElbowAxisId };
+	I32 Axis[2] = { ControlCard::ShoulderAxisId, ControlCard::ElbowAxisId };
 
 	//每过一秒就更新插值区间
 	if (loop_count % 10 == 0) {
@@ -346,7 +346,7 @@ void PassiveControl::TeachCtrl() {
 			Her_Teach_Pos[j],
 			Her_Teach_Vel[j],
 			Teach_Time);
-		APS_absolute_move(Axis[j], Teach_Cmd/ Unit_Convert, 15/Unit_Convert);
+		APS_absolute_move(Axis[j], Teach_Cmd/ ControlCard::Unit_Convert, 15/ ControlCard::Unit_Convert);
 		isMoving = true;
 	}
 }
