@@ -228,13 +228,13 @@ void RFPassiveTrainAction::SaveMoveingData()
 	details.totaltreattime = details.traintime;
 	details.recoverdetail = details.content;
 
-	Teach teach;
+	PassiveData teach;
 	RFMainWindow::MainWindow->m_robot.getCurrentPasvMove(teach);
 
-	//details.target_pos[0] = teach.Target_Pos[0];
-	//details.target_pos[1] = teach.Target_Pos[1];
-	details.target_vel[0] = teach.Target_Vel[0];
-	details.target_vel[1] = teach.Target_Vel[1];
+	//details.target_pos[0] = teach.target_positions[0];
+	//details.target_pos[1] = teach.target_positions[1];
+	details.target_vel[0] = teach.target_velocitys[0];
+	details.target_vel[1] = teach.target_velocitys[1];
 	
 	RFPatientsTrainDetails::get()->AddPatientTrainDetails(details);
 }

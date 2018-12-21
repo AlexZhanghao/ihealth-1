@@ -13,12 +13,15 @@ public:
 	~RFPassiveTrain(void);
 
 	int LoadPassiveTrainInfo();
+	// 将被动运动中录制的数据添加到数据库中
 	void AddPassiveTrainInfo(PassiveTrainInfo train);
 	
 	std::map<std::wstring, int> m_robot_indexs;
 	std::list<PassiveTrainInfo> m_passivetraininfos;
 
 	static int OnLoadPassiveTrainInfoOK(EventArg* pArg);
+	// 把被动录制的数据添加到数据库中之后，需要将当前动作集刷新
+	// 并跳转到被动运动主页面
 	static int OnAddPassiveTrainInfoOK(EventArg* pArg);
 	static int OnDeletePassiveTrainInfoOK(EventArg *pArg);
 };

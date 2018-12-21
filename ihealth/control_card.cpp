@@ -273,7 +273,7 @@ void ControlCard::GetJointVelocity(double *buffer) {
 	double raw_arm_vel = 0;
 	double  raw_shoulder_vel = 0;
 	APS_get_feedback_velocity_f(ElbowAxisId, &raw_arm_vel);
-	APS_get_position_f(ShoulderAxisId, &raw_shoulder_vel);
+	APS_get_feedback_velocity_f(ShoulderAxisId, &raw_shoulder_vel);
 	buffer[0] = raw_shoulder_vel * Unit_Convert;
 	buffer[1] = raw_arm_vel * Unit_Convert;
 }

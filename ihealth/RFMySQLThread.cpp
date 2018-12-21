@@ -788,6 +788,12 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 		return 1;
 	}
 
+	// to fetch auto_increment directly from engine, not cache
+	RFMYSQLStmt s;
+	if (s.Prepare(RFMainWindow::DBThread->m_db, "SET @@SESSION.information_schema_stats_expiry = 0") < 0) {
+		TRACE("set expiry = 0 error\n");
+	}
+
 	int detailid = 0;
 	RFMYSQLStmt stmt;
 	if (stmt.Prepare(RFMainWindow::DBThread->m_db, "SELECT AUTO_INCREMENT FROM information_schema.tables where TABLE_NAME='patienttrain'") > 0) {
@@ -1286,6 +1292,11 @@ int RFMySQLThread::LoadEvaluationDatas(EventArg* pArg)
 		return 1;
 	}
 
+	// to fetch auto_increment directly from engine, not cache
+	RFMYSQLStmt s;
+	if (s.Prepare(RFMainWindow::DBThread->m_db, "SET @@SESSION.information_schema_stats_expiry = 0") < 0) {
+		TRACE("set expiry = 0 error\n");
+	}
 
 	int nextid = 0;
 	RFMYSQLStmt stmt;

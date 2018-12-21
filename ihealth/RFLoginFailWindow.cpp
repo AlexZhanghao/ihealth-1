@@ -211,7 +211,7 @@ bool RFDialog::OnCancelClose(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return false;
 
-	if (RFMainWindow::MainWindow->m_robot.IsPassiveTeaching()) {
+	if (RFMainWindow::MainWindow->m_robot.IsPassiveRecording()) {
 		m_tickcount = 0;
 		::KillTimer(NULL, recordTimer);
 		recordTimer = NULL;
@@ -228,8 +228,8 @@ bool RFDialog::OnOKClose(void *pParam) {
 	if (pMsg->sType != _T("click"))
 		return true;
 
-	//当主动运动没有结束的时候就点击了OK，这个时候我们应该没有反应
-	if (RFMainWindow::MainWindow->m_robot.IsPassiveTeaching()) {
+	// 当主动运动没有结束的时候就点击了OK，这个时候我们应该没有反应
+	if (RFMainWindow::MainWindow->m_robot.IsPassiveRecording()) {
 		return true;
 	}
 
@@ -238,20 +238,27 @@ bool RFDialog::OnOKClose(void *pParam) {
 	if (pEdit) {
 		actionname = pEdit->GetText();
 	}
-	if (!actionname.empty()) {
-		Teach teach;
-		RFMainWindow::MainWindow->m_robot.getCurrentTeach(teach);
 
-		if (teach.Target_Pos[0].size() > 0 && teach.Target_Pos[1].size() > 0 &&
-			teach.Target_Vel[0].size() > 0 && teach.Target_Vel[1].size() > 0) {
-			RFMainWindow::MainWindow->m_robot.addPasvMove();
+	if (!actionname.empty()) {
+		PassiveData current_record;
+		RFMainWindow::MainWindow->m_robot.GetCurrentRecord(current_record);
+
+		if (current_record.target_positions[0].size() > 0 && current_record.target_positions[1].size() > 0 &&
+			current_record.target_velocitys[0].size() > 0 && current_record.target_velocitys[1].size() > 0) {
+			RFMainWindow::MainWindow->m_robot.StoreCurrentRecord();
 
 			PassiveTrainInfo train;
 			train.name = actionname;
-			train.target_pos[0] = teach.Target_Pos[0];
-			train.target_pos[1] = teach.Target_Pos[1];
-			train.target_vel[0] = teach.Target_Vel[0];
-			train.target_vel[1] = teach.Target_Vel[1];
+			train.target_pos[0] = current_record.target_positions[0];
+			train.target_pos[1] = current_record.target_positions[1];
+			train.target_vel[0] = current_record.target_velocitys[0];
+			train.target_vel[1] = current_record.target_velocitys[1];
+
+			// to fetch auto_increment directly from engine, not cache
+			RFMYSQLStmt s;
+			if (s.Prepare(RFMainWindow::DBThread->m_db, "SET @@SESSION.information_schema_stats_expiry = 0") < 0) {
+				TRACE("set expiry = 0 error\n");
+			}
 
 			//在这里我们加入一个获取id的方法，首先从数据库中取id这一行
 			std::string sql = "SELECT AUTO_INCREMENT FROM information_schema.tables where TABLE_NAME='passivetrain'; ";
@@ -267,6 +274,8 @@ bool RFDialog::OnOKClose(void *pParam) {
 				}
 				stmt.Finalize();
 
+				// 这里因为之前被动运动录制的时候是1s录制一组角度和速度，
+				// 所以有多少组数据就录制了多少秒
 				int totalsecond = train.target_pos[0].size();
 				int minute = totalsecond / 60;
 				int second = totalsecond % 60;
@@ -280,6 +289,7 @@ bool RFDialog::OnOKClose(void *pParam) {
 				RFPassiveTrain::get()->AddPassiveTrainInfo(train);
 			}
 
+			// 生成和动作名相关的语音
 			std::string text = "现在开始" + TGUTF16ToGBK(actionname) + "动作";
 			std::wstring filepathname = (std::wstring)m_pm.GetResourcePath() + _T("/voice/") + actionname + _T(".wav");
 
@@ -391,9 +401,8 @@ bool RFDialog::OnEyeModeJia(void *pParam)
 	return true;
 }
 
-
-void OnRecordTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
-{
+// 在被动运动录制时同时启动的timer，用于在UI上实时显示当前录制的时间
+void OnRecordTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
 	if (!RFDialog::Dialog) {
 		return;
 	}
@@ -414,8 +423,7 @@ void OnRecordTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 	}
 }
 
-bool RFDialog::OnRecordPasvTrain(void *pParam)
-{
+bool RFDialog::OnRecordPasvTrain(void *pParam) {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
 		return false;

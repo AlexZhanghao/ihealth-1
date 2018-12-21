@@ -23,6 +23,7 @@ public:
 	bool OnSelectNow(void *pParam);
 	bool OnReMofidyPwd(void *pParam);
 	bool OnCancelClose(void *pParam);
+	// 被动运动录制完成后，点击确定后的响应函数
 	bool OnOKClose(void *pParam);
 
 	bool OnEyeModeCancelClose(void *pParam);
@@ -35,6 +36,7 @@ public:
 	bool OnEyeModeJian(void *pParam);
 	bool OnEyeModeJia(void *pParam);
 
+	// 被动运动开始录制的响应函数
 	bool OnRecordPasvTrain(void *pParam);
 	bool OnBiaoding(void *pParam);
 

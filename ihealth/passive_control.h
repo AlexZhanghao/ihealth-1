@@ -8,79 +8,80 @@
 #include <string>
 #include <vector>
 
-struct Teach {
-	std::vector<double>Target_Pos[2];//存储位置的数组
-	std::vector<double>Target_Vel[2];//存储速度的数组
-	double Time;//运动时间 s
+// 这个结构体用于保存被动运动数据或者被动录制数据
+struct PassiveData {
+	std::vector<double> target_positions[2];//存储位置的数组
+	std::vector<double> target_velocitys[2];//存储速度的数组
+	double round_time;//运动时间（单位为s）
 };
 
+
+// 控制被动运动的类，控制被动运动的录制，以及根据录制好的被动
+// 运动进行运动
 class PassiveControl {
 public:
     PassiveControl();
     ~PassiveControl();
 
-	//清除被动运动序列的数据
-	void ClearMoveData();
-	//加入新的示教数据到运动序列中（运动序列包含多条示教数据，示教数据包含角度和速度的数组）
-	void PushbackMoveData(const Teach& teach);
-	bool IsMoving();
-    //开始被动运动，index-表示动作的索引
-    void BeginMove(int index);
-	//停止被动运动
-    void StopMove();
-	void GetCurrentMove(Teach& teach);
-	//开始示教
-	void StartTeach();
-	void StopTeach();
-	void GetCurrentTeach(Teach& teach);
-	//添加新动作到运动序列中
-	void AddCurrentTeachToData();
-	void OnPASVHermite(double PosArm, double PosShoul, double Time);
-	//示教的采样函数
-	void Teach_Sample();
-	void TeachCtrl();
-	void Move_Sample();
-	void Set_hWnd(HWND hWnd);
+	// 进行被动运动，index表示被动运动的索引
+	void BeginMove(int index);
+	// 进行一步被动运动，一个完整的被动运动分为多个steps
+	// 每延时一段时间就运行一个step
+	void MoveStep();
+	// 被动运动停止
+	void StopMove();
+	void GetCurrentMove(PassiveData& move);
+
+	// 开始录制动作
+	void BeginRecord();
+	// 进行一步录制动作，一个完整的录制动作分为多个steps
+	// 每隔一段时间就运行一个step
+	void RecordStep();
+	// 录制停止
+	void StopRecord();
+	// 获取最近录制的运动数据，record是输出参数
+	void GetCurrentRecord(PassiveData& record);
+
+	// 加入新的示教数据到运动序列中（运动序列包含多条示教数据，示教数据包含角度和速度的数组）
+	void StoreMovement(const PassiveData& movement);
+	// 添加新动作到运动序列中
+	void StoreCurrentRecord();
+	// 清除被动运动序列的数据
+	void ClearMovementSet();
+
+	// 正在进行录制或者被动运动
+	bool IsBusy();
+
+	void SetHWND(HWND hWnd);
+	void SetActiveControl(ActiveControl *p);
+
+private:
+	// hermite插值算法-返回值为t时间点下电机的位置
+	double PHermite(double foretime[2],	//已知时间点
+					double forepos[2],	//已知位置点
+					double forevel[2],	//已知速度点
+					double t);			//所求时间点
+
 
 public:
-	void SetActiveControl(ActiveControl *p);
-	bool isBeginTeach;
-	//判断是否在初始位置
-	bool isInInitPos;
-	//判断是否在运动中
-	bool isMoving;
-	bool isbeginMove;
-	//默认运动时间
-	int defaultCycleTime;
-	//当前运动动作参数
-    std::vector<int>currentMove;
-	//存储添加动作信息
-	std::vector<Teach>motionParam;
-	//获取当前关节角度
+	bool in_record_status_;
+	bool in_move_status_;
+	bool is_busy_;
 
-	boundaryDetection *m_boundary_detection = NULL;
+	std::vector<PassiveData> movement_set_; // 存储所有被动运动数据
 private:
-	//初始化函数
-	void init();
-	HWND m_hWnd = NULL;
-    int timecount;
-    double PASVHermite_time;
-	boundaryDetection * bDetect;
-	ActiveControl *activectrl;
-	Teach currentTeach;
-	Teach moveTeach;
-	Teach moveSample;
-	double Her_Teach_Time[2][2];//插值运动位置的时间
-	double  Her_Teach_Vel[2][2];//插值运动的始末速度
-	double  Her_Teach_Pos[2][2];//插值运动的始末位置
-	std::vector<std::vector<int> >pasvMoveArray;
-    std::queue<std::pair<std::string,int*>>pasvMove;  	
-    //hermite插值算法-返回值为curtime时间点下电机的位置
-    double PHermite(double foretime[2],//已知时间点
-                        double forepos[2],//已知位置点
-                        double forevel[2],//已知速度点
-                        double t);////所求时间点
-   
+	PassiveData record_data_;
+	PassiveData move_data_;
+
+	ActiveControl *active_control_ = nullptr;
+
+	HWND hWnd_ = NULL;
+    int hermite_time_counter_ = 0;
+	int hermite_target_counter_ = 0;
+	double hermite_time_ = 0.0;
+	double hermite_time_interval_[2][2];// 插值过程中的时间区间
+	double  hermite_vel_interval_[2][2];// 插值过程中的速度区间
+	double  hermite_pos_interval_[2][2];// 插值过程中的位置区间
 };
 
 #endif // PASVCONTRL_H

@@ -202,6 +202,8 @@ struct LoadPatientTrainDetailsResult
 	std::list<PatientTrainDetails> patienttraindetails;
 };
 
+// 对应于数据库中的passivetrain，用于记录
+// 被动模式中一条录制的运动数据
 struct PassiveTrainInfo
 {
 	std::wstring id;
@@ -327,6 +329,7 @@ public:
 	static int LoadPatientTrainInfo(EventArg* pArg);
 	static int LoadPatientTrainDetails(EventArg* pArg);
 	static int LoadPassiveTrainInfo(EventArg* pArg);
+	// 将被动模式中录制的数据添加到数据库中
 	static int AddPassiveTrainInfo(EventArg* pArg);
 	static int DeletePassiveTrainInfo(EventArg *pArg);
 	static int LoadPatientTrainData(EventArg* pArg);

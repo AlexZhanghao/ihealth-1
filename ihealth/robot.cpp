@@ -31,7 +31,6 @@ robot::robot() {
 	eyeModeCtl = nullptr;
 	eyeModeCtl = new EyeMode(bDetect);
 	
-	pasvMode->m_boundary_detection = bDetect;
 	bDetect->startBydetect();
 	m_isActiveModeStart = false;
 	m_isEmgModeStart = false;
@@ -57,19 +56,19 @@ unsigned __stdcall PositionResetThread(void *) {
 	return 0;
 }
 
-void robot::clearPasvMove()
+void robot::ClearPassiveMovementSet()
 {
-	pasvMode->ClearMoveData();
+	pasvMode->ClearMovementSet();
 }
 
-void robot::pushPasvMove(const Teach& move)
+void robot::StoreMovement(const PassiveData& move)
 {
-	pasvMode->PushbackMoveData(move);
+	pasvMode->StoreMovement(move);
 }
 
 bool robot::isMoving()
 {
-	return pasvMode->IsMoving();
+	return pasvMode->IsBusy();
 }
 
 void robot::startPasvMove(int index)
@@ -90,35 +89,33 @@ void robot::stopPasvMove()
 	}
 	//}
 }
-void robot::getCurrentPasvMove(Teach& teach)
+void robot::getCurrentPasvMove(PassiveData& teach)
 {
 	//if (ctrlCard->IsCardInitial()) {
 		pasvMode->GetCurrentMove(teach);
 	//}
 }
 void robot::startTeach() {
-		pasvMode->StartTeach();
+		pasvMode->BeginRecord();
 }
 void robot::stopTeach()
 {
 	//if (ctrlCard->IsCardInitial()) {
-		pasvMode->StopTeach();
+		pasvMode->StopRecord();
 	//}
 }
 
-void robot::getCurrentTeach(Teach& teach)
+void robot::GetCurrentRecord(PassiveData& teach)
 {
 	//if (ctrlCard->IsCardInitial()) {
-		pasvMode->GetCurrentTeach(teach);
+		pasvMode->GetCurrentRecord(teach);
 	//}
 }
 
-void robot::addPasvMove()
-{
-	//if (ctrlCard->IsCardInitial()) {
-		pasvMode->AddCurrentTeachToData();
-	//}
+void robot::StoreCurrentRecord() {
+	pasvMode->StoreCurrentRecord();
 }
+
 void robot::startActiveMove() {
 	if (!m_isActiveModeStart) {
 		activeCtrl->StartMove();
@@ -205,7 +202,7 @@ void robot::setWindow(HWND hWnd)
 {
 	m_hWnd = hWnd;
 	bDetect->Set_hWnd(hWnd);
-	pasvMode->Set_hWnd(hWnd);
+	pasvMode->SetHWND(hWnd);
 	ControlCard::GetInstance().Set_hWnd(hWnd);
 	EMGContrl->m_hWnd = hWnd;
 }
@@ -265,7 +262,7 @@ void getSensorData(bool Travel_Switch[4])
 	Travel_Switch[3] = di_ch[19];//1号电机MEL信号-肩部电机
 }
 
-bool robot::IsPassiveTeaching() {
-	return pasvMode->isBeginTeach;
+bool robot::IsPassiveRecording() {
+	return pasvMode->in_record_status_;
 }
 

@@ -43,7 +43,7 @@ void RFPassiveTrain::AddPassiveTrainInfo(PassiveTrainInfo train)
 	CTask::Assign(CTask::NotWait, Panic(), pParam, EventHandle(&RFMySQLThread::AddPassiveTrainInfo), RFMainWindow::UIThread, RFMainWindow::DBThread);
 }
 
-int RFPassiveTrain::OnAddPassiveTrainInfoOK(EventArg* pArg)
+int RFPassiveTrain::OnAddPassiveTrainInfoOK(EventArg* pArg) 
 {
 	CTask *pTask = pArg->GetAttach<CTask*>();
 	PassiveTrainInfo *pParam = pTask->GetContext<PassiveTrainInfo*>();
@@ -53,19 +53,19 @@ int RFPassiveTrain::OnAddPassiveTrainInfoOK(EventArg* pArg)
 
 	RFPassiveTrain::get()->m_passivetraininfos.push_back(*pParam);
 
-	RFMainWindow::MainWindow->m_robot.clearPasvMove();
+	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
 	int index = 0;
 	std::list<PassiveTrainInfo>::iterator begin = RFPassiveTrain::get()->m_passivetraininfos.begin();
 	for (; begin != RFPassiveTrain::get()->m_passivetraininfos.end(); begin++) {
-		Teach teach;
+		PassiveData item;
 
-		teach.Target_Pos[0] = begin->target_pos[0];
-		teach.Target_Pos[1] = begin->target_pos[1];
-		teach.Target_Vel[0] = begin->target_vel[0];
-		teach.Target_Vel[1] = begin->target_vel[1];
+		item.target_positions[0] = begin->target_pos[0];
+		item.target_positions[1] = begin->target_pos[1];
+		item.target_velocitys[0] = begin->target_vel[0];
+		item.target_velocitys[1] = begin->target_vel[1];
 
 		RFPassiveTrain::get()->m_robot_indexs[begin->id] = index;
-		RFMainWindow::MainWindow->m_robot.pushPasvMove(teach);
+		RFMainWindow::MainWindow->m_robot.StoreMovement(item);
 
 		index++;
 	}
@@ -91,7 +91,7 @@ int RFPassiveTrain::OnDeletePassiveTrainInfoOK(EventArg *pArg) {
 			++iter;
 		}
 	} 
-	RFMainWindow::MainWindow->m_robot.clearPasvMove();
+	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
 
 	RFMainWindow::MainWindow->ShowPassiveTrainPage();
 
@@ -110,19 +110,19 @@ int RFPassiveTrain::OnLoadPassiveTrainInfoOK(EventArg* pArg)
 
 	RFPassiveTrain::get()->m_passivetraininfos = pParam->passivetraininfos;
 
-	RFMainWindow::MainWindow->m_robot.clearPasvMove();
+	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
 	int index = 0;
 	std::list<PassiveTrainInfo>::iterator begin = pParam->passivetraininfos.begin();
 	for (; begin != pParam->passivetraininfos.end(); begin++) {
-		Teach teach;
+		PassiveData teach;
 
-		teach.Target_Pos[0] = begin->target_pos[0];
-		teach.Target_Pos[1] = begin->target_pos[1];
-		teach.Target_Vel[0] = begin->target_vel[0];
-		teach.Target_Vel[1] = begin->target_vel[1];
+		teach.target_positions[0] = begin->target_pos[0];
+		teach.target_positions[1] = begin->target_pos[1];
+		teach.target_velocitys[0] = begin->target_vel[0];
+		teach.target_velocitys[1] = begin->target_vel[1];
 	
 		RFPassiveTrain::get()->m_robot_indexs[begin->id] = index;
-		RFMainWindow::MainWindow->m_robot.pushPasvMove(teach);
+		RFMainWindow::MainWindow->m_robot.StoreMovement(teach);
 
 		index++;
 	}

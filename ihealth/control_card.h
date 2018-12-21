@@ -33,6 +33,23 @@ public:
 	void GetJointVelocity(double *buffer);
 	void Close();
 
+public:
+	static const I32 InvalidBoardId = -1;
+	static const double ResetVel;
+	static const double MaxVel;
+	static const double kElbowLimitInDegree;
+	static const double kShoulderLimitInDegree;
+
+	static const bool MotorOn = 1;
+	static const bool MotorOff = 0;
+	static const bool ClutchOn = 0;
+	static const bool ClutchOff = 1;
+	static const int OutputChannels = 24;
+	static const int InputChannels = 24;
+	static const int ShoulderAxisId = 0;
+	static const int ElbowAxisId = 1;
+	static const double Unit_Convert;
+
 private:
 	ControlCard();
 	void LoadParamFromFile();
@@ -44,7 +61,6 @@ private:
 	bool NoError(I32 error_code);
 	bool OutOfWorkingArea(double vel, bool *limit_switches);
 	I32 ValidBoardId(I32 board_id_in_bits);
-
 
 private:
 	HWND m_hWnd = NULL;
@@ -63,21 +79,4 @@ private:
 
 	int direction_positive_;
 	int direction_negative_;
-
-public:
-	static const I32 InvalidBoardId = -1;
-	static const double ResetVel;
-	static const double MaxVel;
-	static const double kElbowLimitInDegree;
-	static const double kShoulderLimitInDegree;
-
-	static const bool MotorOn = 1;
-	static const bool MotorOff = 0;
-	static const bool ClutchOn = 0;
-	static const bool ClutchOff = 1;
-	static const int OutputChannels = 24;
-	static const int InputChannels = 24;
-	static const int ShoulderAxisId = 0;
-	static const int ElbowAxisId = 1;
-	static const double Unit_Convert;
 };

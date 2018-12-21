@@ -15,25 +15,24 @@ public:
 	/************************************************************************/
 	/*                           被动模式接口                                */
 	/************************************************************************/
-	void clearPasvMove();
-	void pushPasvMove(const Teach& move);
+	void ClearPassiveMovementSet();
+	void StoreMovement(const PassiveData& move);
 	bool isMoving();
 	//开始被动运动，index-表示动作的索引
 	void startPasvMove(int index);
 	//停止被动运动
 	void stopPasvMove();
-	void getCurrentPasvMove(Teach& teach);
+	void getCurrentPasvMove(PassiveData& teach);
 	//开始示教
 	void startTeach();
 	//结束示教
 	void stopTeach();
-	void getCurrentTeach(Teach& teach);
+	void GetCurrentRecord(PassiveData& teach);
 
-	//添加新动作
-	void addPasvMove();
-	//关节力矩值-数据接口，0-肩部关节力矩，1-肘部关节力矩
-	bool* getSwitchData();
-	bool IsPassiveTeaching();
+	// 将最近的录制数据保存在被动运动动作序列中
+	void StoreCurrentRecord();
+	// 返回被动运动是否正在录制
+	bool IsPassiveRecording();
 	/************************************************************************/
 	/*                           主动模式接口                                */
 	/************************************************************************/
