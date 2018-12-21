@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef Matrix_H
+#define Matrix_H
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <iostream>
@@ -17,41 +18,43 @@ const double InitAngle[5] = {
 	16.86, 14.83, 4.48, 5.92, 2.96
 };
 
-//#define LEFT_ARM 1
-#ifdef LEFT_ARM
-//这里的AxisDirection就是定义了每个角速度方向上的单位矢量w
-//这个就是根据我们的旋转怎么转决定的。
-const Vector3d AxisDirection[5] = {
-	Vector3d(1.0,0,0),
-	Vector3d(0,0,1.0),
-	Vector3d(0,-1.0,0),
-	Vector3d(0,-1.0,0),
-	Vector3d(-1.0,0,0)
+extern Vector3d AxisDirection[5];
+extern Vector3d AxisPosition[5];
 
-};
-const Vector3d AxisPosition[5] = {
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-LowerArmLength,0,0),
-	Vector3d(-LowerArmLength,0,0)
-};
-#else
-const Vector3d AxisDirection[5] = {
-	Vector3d(-1,0,0),
-	Vector3d(0,0,-1),
-	Vector3d(0,-1,0),
-	Vector3d(0,-1,0),
-	Vector3d(1,0,0)
-};
-const Vector3d AxisPosition[5] = {
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-UpperArmLength - LowerArmLength,0,0),
-	Vector3d(-LowerArmLength,0,0),
-	Vector3d(-LowerArmLength,0,0)
-};
-#endif
+////#define LEFT_ARM 1
+//#ifdef LEFT_ARM
+////这里的AxisDirection就是定义了每个角速度方向上的单位矢量w
+////这个就是根据我们的旋转怎么转决定的。
+//Vector3d AxisDirection[5] = {
+//	Vector3d(1.0,0,0),
+//	Vector3d(0,0,1.0),
+//	Vector3d(0,-1.0,0),
+//	Vector3d(0,-1.0,0),
+//	Vector3d(-1.0,0,0)
+//};
+//Vector3d AxisPosition[5] = {
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-LowerArmLength,0,0),
+//	Vector3d(-LowerArmLength,0,0)
+//};
+//#else
+//static Vector3d AxisDirection[5] = {
+//	Vector3d(-1,0,0),
+//	Vector3d(0,0,-1),
+//	Vector3d(0,-1,0),
+//	Vector3d(0,-1,0),
+//	Vector3d(1,0,0)
+//};
+//static Vector3d AxisPosition[5] = {
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-UpperArmLength - LowerArmLength,0,0),
+//	Vector3d(-LowerArmLength,0,0),
+//	Vector3d(-LowerArmLength,0,0)
+//};
+//#endif
 
 //这个函数实际上就是在计算运动旋量ζ
 template<typename DerivedA, typename DerivedB, typename DerivedC>
@@ -313,3 +316,5 @@ void fwd(const MatrixBase<DerivedA>& theta_Pi,MatrixBase<DerivedB>& P0)
     P0(2)=d1*(cos(theta(0))*sin(theta(2)) + cos(theta(2))*sin(theta(0))*sin(theta(1))) + d2*(cos(theta(3))*(cos(theta(0))*sin(theta(2)) + cos(theta(2))*sin(theta(0))*sin(theta(1))) + sin(theta(2))*(cos(theta(0))*cos(theta(2)) -		 sin(theta(0))*sin(theta(1))*sin(theta(2)))) + 9.0/50.0;
 
 }
+
+#endif

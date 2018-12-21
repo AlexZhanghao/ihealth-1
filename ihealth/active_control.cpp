@@ -1,15 +1,15 @@
 ﻿#include "active_control.h"
 
-#include<iostream>
+#include <iostream>
+#include <sstream>
 #include <process.h>
 #include <windows.h>
 
 #include "Matrix.h"
 #include "Log.h"
 #include "data_acquisition.h"
+#include "pupiltracker/utils.h"
 
-
-#define FTS_TIME 0.1
 using namespace Eigen;
 using namespace std;
 
@@ -30,77 +30,146 @@ static const int kPlaneMaxY = 601;
 static const double kShoulderAngleMax = 40;
 static const double kElbowAngleMax = 40;
 
+extern Vector3d AxisDirection[5] {
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+};
+extern Vector3d AxisPosition[5] {
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+	Vector3d(0, 0, 0),
+};
+
 ActiveControl::ActiveControl() {
-	m_hThread = 0;
+	move_thread_handle_ = 0;
 	is_exit_thread_ = false;
 	is_moving_ = false;
+	LoadParamFromFile();
+}
+
+void ActiveControl::LoadParamFromFile() {
+	pupiltracker::ConfigFile cfg;
+	cfg.read("../../resource/params/active_control.cfg");
+	string s;
+	stringstream ss;
+	string item;
+
+	// rotate_matrix_
+	s = cfg.get<string>("rotate_matrix");
+	ss.clear();
+	ss.str(s);
+	vector<int> r;
+	while (getline(ss, item, ',')) {
+		r.push_back(stoi(item));
+	}
+	rotate_matrix_ <<
+		r[0], r[1], r[2],
+		r[3], r[4], r[5],
+		r[6], r[7], r[8];
+
+	// force_position_
+	s = cfg.get<string>("force_position");
+	ss.clear();
+	ss.str(s);
+	vector<double> f;
+	while (getline(ss, item, ',')) {
+		f.push_back(stod(item));
+	}
+	force_position_ << f[0], f[1], f[2];
+
+	// param depend on left or right arm
+	int is_left = cfg.get<int>("is_left");
+	if (is_left) {
+		AxisDirection[0] = Vector3d(1.0, 0, 0);
+		AxisDirection[1] = Vector3d(0, 0, 1.0);
+		AxisDirection[2] = Vector3d(0, -1.0, 0);
+		AxisDirection[3] = Vector3d(0, -1.0, 0);
+		AxisDirection[4] = Vector3d(-1.0, 0, 0);
+
+		AxisPosition[0] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[1] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[2] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[3] = Vector3d(-LowerArmLength, 0, 0);
+		AxisPosition[4] = Vector3d(-LowerArmLength, 0, 0);
+	} else {
+		AxisDirection[0] = Vector3d(-1, 0, 0);
+		AxisDirection[1] = Vector3d(0, 0, -1);
+		AxisDirection[2] = Vector3d(0, -1, 0);
+		AxisDirection[3] = Vector3d(0, -1, 0);
+		AxisDirection[4] = Vector3d(1, 0, 0);
+
+		AxisPosition[0] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[1] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[2] = Vector3d(-UpperArmLength - LowerArmLength, 0, 0);
+		AxisPosition[3] = Vector3d(-LowerArmLength, 0, 0);
+		AxisPosition[4] = Vector3d(-LowerArmLength, 0, 0);
+	}
+
+	// cycle_time_in_second
+	cycle_time_in_second_ = cfg.get<double>("cycle_time_in_second");
+	
 }
 
 ActiveControl:: ~ActiveControl() {
 	//DataAcquisition::GetInstance().StopTask();
 }
 
-unsigned int __stdcall FTSThreadFun(PVOID pParam)
-{
-	ActiveControl *FTS = (ActiveControl*)pParam;
-	UINT oldTickCount, newTickCount;
-	oldTickCount = GetTickCount();
-
+unsigned int __stdcall ActiveMoveThread(PVOID pParam) {
+	ActiveControl *active = (ActiveControl*)pParam;
+	UINT start, end;
+	start = GetTickCount();
+	// 求六维力传感器的偏置
 	double sum[6]{ 0.0 };
 	double buf[6]{ 0.0 };
 	for (int i = 0;i < 10;++i) {
 		DataAcquisition::GetInstance().AcquisiteSixDemensionData(buf);
-
 		for (int j = 0;j < 6;++j) {
 			sum[j] += buf[j];
 		}
 	}
 	for (int i = 0;i < 6;++i) {
-		FTS->six_dimension_offset_[i] = sum[i] / 10;
+		active->six_dimension_offset_[i] = sum[i] / 10;
 	}
 	DataAcquisition::GetInstance().StopTask();
 	DataAcquisition::GetInstance().StartTask();
 
-	while (TRUE) {
-		if (FTS->is_exit_thread_) {
+	while (true) {
+		if (active->is_exit_thread_) {
 			break;
 		}
 
-		//延时 BOYDET_TIME s
-		while (TRUE) {
-			newTickCount = GetTickCount();
-			if (newTickCount - oldTickCount >= FTS_TIME * 1000) {
-				oldTickCount = newTickCount;
+		// 每隔一定时间进行一次循环，这个循环时间应该是可调的。
+		while (true) {
+			end = GetTickCount();
+			if (end - start >= active->cycle_time_in_second_ * 1000) {
+				start = end;
 				break;
 			} else {
 				SwitchToThread();
 			}
 		}
 
-		FTS->Step();
+		active->Step();
 
 	}
-	//std::cout << "FTSThreadFun Thread ended." << std::endl;
+	//std::cout << "ActiveMoveThread Thread ended." << std::endl;
 	return 0;
 }
-void ActiveControl::MoveInNewThread()
-{
-	//qDebug()<<"activecontrol  Start!";
-	/*    mFTWrapper.LoadCalFile();
-	mFTWrapper.BiasCurrentLoad(true);
-	mFTWrapper.setFUnit();
-	mFTWrapper.setTUnit();
-	*/
+void ActiveControl::MoveInNewThread() {
 	is_exit_thread_ = false;
-
-	m_hThread = (HANDLE)_beginthreadex(NULL, 0, FTSThreadFun, this, 0, NULL);
+	move_thread_handle_ = (HANDLE)_beginthreadex(NULL, 0, ActiveMoveThread, this, 0, NULL);
 }
 void ActiveControl::ExitMoveThread() {
 	is_exit_thread_ = true;
 
-	if (m_hThread != 0) {
-		::WaitForSingleObject(m_hThread, INFINITE);
-		m_hThread = 0;
+	if (move_thread_handle_ != 0) {
+		::WaitForSingleObject(move_thread_handle_, INFINITE);
+		move_thread_handle_ = 0;
 	}
 }
 
@@ -127,21 +196,12 @@ void ActiveControl::Step() {
 
 	DataAcquisition::GetInstance().AcquisiteSixDemensionData(readings);
 
-
-
+	// 求减去偏置之后的六维力，这里对z轴的力和力矩做了一个反向
 	for (int i = 0; i < 6; ++i) {
 		sub_bias[i] = readings[i] - six_dimension_offset_[i];
 	}
-
 	sub_bias[2] = -sub_bias[2];
 	sub_bias[5] = -sub_bias[5];
-
-
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
-	//printf("raw %lf    %lf    %lf    %lf    %lf    %lf \n", readings[0], readings[1], readings[2], readings[3], readings[4], readings[5]);
-	//printf("sub %lf    %lf    %lf    %lf    %lf    %lf \n", sub_bias[0], sub_bias[1], sub_bias[2], sub_bias[3], sub_bias[4], sub_bias[5]);
-
 
 	Raw2Trans(sub_bias, distData);
 	Trans2Filter(distData, filtedData);
@@ -152,35 +212,25 @@ void ActiveControl::Step() {
 
 	//qDebug()<<"readings is "<<filtedData[0]<<" "<<filtedData[1]<<" "<<filtedData[2]<<" "<<filtedData[3]<<" "<<filtedData[4]<<" "<<filtedData[5];
 }
-void ActiveControl::Raw2Trans(double RAWData[6], double DistData[6])
-{
+void ActiveControl::Raw2Trans(double RAWData[6], double DistData[6]) {
 	//这一段就是为了把力从六维力传感器上传到手柄上，这里的A就是总的一个转换矩阵。
 	//具体的旋转矩阵我们要根据六维力的安装确定坐标系方向之后然后再确定。
 	MatrixXd A(6, 6);
 	A.setZero();
 	VectorXd Value_Origi(6);
 	VectorXd Value_Convers(6);
-	Matrix3d rotate_matrix;
-	//这里的旋转矩阵要根据六维力坐标系和手柄坐标系来具体得到
-	rotate_matrix <<
-		1, 0, 0,
-		0, 0, -1,
-		0, 1, 0;
-	Vector3d ForcePosition(-0.075, 0.035, 0);
-	//手柄坐标系下手柄坐标系原点到六维力坐标系原点的向量
-	//Vector3d ForcePosition(0.075, -0.035, 0);
 	Matrix3d ForcePositionHat;
 	//这里就是这个p，我们可以想象，fx不会产生x方向的力矩，fy产生的看z坐标，fz产生的y坐标。
 	//这里做的就是把力矩弄过去。这个相对坐标都是六维力坐标在手柄坐标系下的位置。
 	//比如fx在y方向上有一个力臂，就会产生一个z方向上的力矩。这个力矩的方向和相对位置无关。
-	//所以这个地方我们不用改这个ForcePositionHat，只用改ForcePosition这个相对位置就可以了
+	//所以这个地方我们不用改这个ForcePositionHat，只用改force_position_这个相对位置就可以了
 	ForcePositionHat <<
-		0, -ForcePosition[2], ForcePosition[1],
-		ForcePosition[2], 0, -ForcePosition[0],
-		-ForcePosition[1], ForcePosition[0], 0;
-	A.block(0, 0, 3, 3) = rotate_matrix;
-	A.block(0, 3, 3, 1) = ForcePositionHat * rotate_matrix;
-	A.block(3, 3, 3, 3) = rotate_matrix;
+		0, -force_position_[2], force_position_[1],
+		force_position_[2], 0, -force_position_[0],
+		-force_position_[1], force_position_[0], 0;
+	A.block(0, 0, 3, 3) = rotate_matrix_;
+	A.block(0, 3, 3, 1) = ForcePositionHat * rotate_matrix_;
+	A.block(3, 3, 3, 3) = rotate_matrix_;
 
 
 	//之前是fxfyfzMxMyMz,现在变成MxMyMzfxfyfz
@@ -198,10 +248,6 @@ void ActiveControl::Raw2Trans(double RAWData[6], double DistData[6])
 	for (int m = 0; m<6; m++) {
 		DistData[m] = Value_Convers(m);
 	}
-
-	//AllocConsole();
-	//freopen("CONOUT$", "w", stdout);
-	//printf("handle fx:%lf    fy:%lf    fz:%lf \n Mx:%lf    My:%lf    Mz:%lf \n", DistData[3], DistData[4], DistData[5], DistData[0], DistData[1], DistData[2]);
 }
 
 void ActiveControl::Trans2Filter(double TransData[6], double FiltedData[6]) {
