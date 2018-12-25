@@ -7,58 +7,60 @@
 #include "EyeMode.h"
 
 
-class robot 
-{
+class Robot {
 public:
-	robot();
-	~robot();
+	Robot();
+	~Robot();
 	/************************************************************************/
 	/*                           被动模式接口                                */
 	/************************************************************************/
-	void ClearPassiveMovementSet();
-	void StoreMovement(const PassiveData& move);
-	bool isMoving();
 	//开始被动运动，index-表示动作的索引
-	void startPasvMove(int index);
+	void PassiveStartMove(int index);
 	//停止被动运动
-	void stopPasvMove();
-	void getCurrentPasvMove(PassiveData& teach);
-	//开始示教
-	void startTeach();
+	void PassiveStopMove();
+	//开始录制动作
+	void PassiveBeginRecord();
 	//结束示教
-	void stopTeach();
-	void GetCurrentRecord(PassiveData& teach);
-
+	void PassiveStopRecord();
+	// 返回最近的一次被动运动
+	void PassiveGetCurrentMove(PassiveData& move);
+	// 返回最近的一次录制
+	void PassiveGetCurrentRecord(PassiveData& teach);
+	// 清除被动运动动作序列
+	void PassiveClearMovementSet();
 	// 将最近的录制数据保存在被动运动动作序列中
-	void StoreCurrentRecord();
+	void PassiveStoreCurrentRecord();
+	// 保存指定的被动动作
+	void PassiveStoreMovement(const PassiveData& move);
+	// 返回被动运动是否正在运动或录制
+	bool PassiveIsBusy();
 	// 返回被动运动是否正在录制
 	bool IsPassiveRecording();
+
 	/************************************************************************/
 	/*                           主动模式接口                                */
 	/************************************************************************/
 	//开始主动运动
-	void startActiveMove();
+	void ActiveStartMove();
 	//结束主动运动
-	void stopActiveMove();
-	//返回关节角度-数据接口,0-肩部关节角度，1-肘部关节角度
-	void getAngle(double angles[2]);
+	void ActiveStopMove();
 	//返回握力-数据接口
-	double getWirstForce();
-	bool	isFire();
-	void	getPlanePos(short w, short h, double XY[2]);
-	void	setDamping(float FC=0.1);	
+	double GetGripStrength();
+	bool	IsFire();
+	void	GetPlanePos(short w, short h, double XY[2]);
+	void	SetDamping(float FC=0.1);	
 
 	/************************************************************************/
 	/*                           sEMG模式接口                                */
 	/************************************************************************/
-	bool isEMGMove();
+	bool EMGIsMove();
 	//开始EMG运动
-	void startEMGMove();
+	void EMGStartMove();
 	//停止EMG运动
-	void stopEMGMove();
+	void EMGStopMove();
 	//获取EMG信号-数据接口，index-信号编号，分别为0，1，2，3
-	double getEMGSignal(int index = 0);
-	//返回关节角度-数据接口,0-肩部关节角度，1-肘部关节角度(同上面主动模式接口) 
+	double EMGGetSignal(int index = 0);
+
 	/************************************************************************/
 	/*                           眼动模式接口                                */
 	/************************************************************************/

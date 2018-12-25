@@ -216,6 +216,7 @@ public:
 	void		ShowManagerPatientPage();
 	void		ShowTrainPage();
 	void		ShowActiveTrainPage();
+	// 将页面转到被动训练的主页面，在这个过程中需要刷新当前展示的动作列表。
 	void		ShowPassiveTrainPage();
 	void		ShowPatientDetail(int page, int index);
 	void		ShowPatientEdit(int page, int index);
@@ -373,7 +374,7 @@ public:
 	std::vector<double>				m_emgmode_ydjd[2];
 
 	RFRobotEventControl				m_robotEvent;
-	robot							m_robot;
+	Robot							m_robot;
 
 	RFMAS							m_mas;
 	RFFMA							m_fma;

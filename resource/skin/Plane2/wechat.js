@@ -1,3 +1,4 @@
+
 var startdiv=document.getElementById('startdiv');
 var maindiv=document.getElementById('maindiv');
 var score=document.getElementById('score');
@@ -14,6 +15,8 @@ window.setStart = 0;
 window.getStartGame = function (){
     return window.setStart
 }
+
+
 //开始游戏按钮
 var Checkint = 120;
 if(true){

@@ -53,7 +53,8 @@ int RFPassiveTrain::OnAddPassiveTrainInfoOK(EventArg* pArg)
 
 	RFPassiveTrain::get()->m_passivetraininfos.push_back(*pParam);
 
-	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
+	// 刷新robot中的动作列表，加入最新的动作
+	RFMainWindow::MainWindow->m_robot.PassiveClearMovementSet();
 	int index = 0;
 	std::list<PassiveTrainInfo>::iterator begin = RFPassiveTrain::get()->m_passivetraininfos.begin();
 	for (; begin != RFPassiveTrain::get()->m_passivetraininfos.end(); begin++) {
@@ -65,7 +66,7 @@ int RFPassiveTrain::OnAddPassiveTrainInfoOK(EventArg* pArg)
 		item.target_velocitys[1] = begin->target_vel[1];
 
 		RFPassiveTrain::get()->m_robot_indexs[begin->id] = index;
-		RFMainWindow::MainWindow->m_robot.StoreMovement(item);
+		RFMainWindow::MainWindow->m_robot.PassiveStoreMovement(item);
 
 		index++;
 	}
@@ -91,7 +92,7 @@ int RFPassiveTrain::OnDeletePassiveTrainInfoOK(EventArg *pArg) {
 			++iter;
 		}
 	} 
-	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
+	RFMainWindow::MainWindow->m_robot.PassiveClearMovementSet();
 
 	RFMainWindow::MainWindow->ShowPassiveTrainPage();
 
@@ -110,7 +111,8 @@ int RFPassiveTrain::OnLoadPassiveTrainInfoOK(EventArg* pArg)
 
 	RFPassiveTrain::get()->m_passivetraininfos = pParam->passivetraininfos;
 
-	RFMainWindow::MainWindow->m_robot.ClearPassiveMovementSet();
+	// 刷新robot中的动作列表
+	RFMainWindow::MainWindow->m_robot.PassiveClearMovementSet();
 	int index = 0;
 	std::list<PassiveTrainInfo>::iterator begin = pParam->passivetraininfos.begin();
 	for (; begin != pParam->passivetraininfos.end(); begin++) {
@@ -122,7 +124,7 @@ int RFPassiveTrain::OnLoadPassiveTrainInfoOK(EventArg* pArg)
 		teach.target_velocitys[1] = begin->target_vel[1];
 	
 		RFPassiveTrain::get()->m_robot_indexs[begin->id] = index;
-		RFMainWindow::MainWindow->m_robot.StoreMovement(teach);
+		RFMainWindow::MainWindow->m_robot.PassiveStoreMovement(teach);
 
 		index++;
 	}

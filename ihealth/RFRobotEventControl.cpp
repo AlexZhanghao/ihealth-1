@@ -13,7 +13,7 @@ unsigned int __stdcall EventControl(PVOID pParam)
 		//bool bFire = RFMainWindow::MainWindow->m_robot.isFire();
 		
 		double XY[2];
-		RFMainWindow::MainWindow->m_robot.getPlanePos(robotEvent->m_nWidth, robotEvent->m_nHeight, XY);
+		RFMainWindow::MainWindow->m_robot.GetPlanePos(robotEvent->m_nWidth, robotEvent->m_nHeight, XY);
 
 	/*	robotEvent->m_fX = XY[0];
 		robotEvent->m_fY = XY[1];*/

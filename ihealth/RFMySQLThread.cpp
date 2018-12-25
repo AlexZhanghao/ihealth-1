@@ -806,13 +806,14 @@ int RFMySQLThread::AddPatientTrainDetails(EventArg* pArg)
 	wchar_t patientid[64] = _T("");
 	wsprintf(patientid, _T("%d,"), pParam->patientid);
 
-	std::wstring sql = _T("INSERT INTO patienttrain (patientid,traindate,content,duration,traintime,createtime) value(");
+	std::wstring sql = _T("INSERT INTO patienttrain (patientid,traindate,content,duration,traintime,createtime,flag) value(");
 	sql += patientid;
 	sql += _T("'") + pParam->traindate + _T("',");
 	sql += _T("'") + pParam->content + _T("',");
 	sql += _T("'") + pParam->duration + _T("',");
 	sql += _T("'") + pParam->traintime + _T("',");
-	sql += _T("'") + pParam->createtime + _T("')");
+	sql += _T("'") + pParam->createtime + _T("',");
+	sql += _T("'0')");
 	RFMainWindow::DBThread->m_db.Exec(TGUTF16ToUTF8(sql).c_str());
 
 
@@ -1164,7 +1165,7 @@ int RFMySQLThread::AddPassiveTrainInfo(EventArg* pArg)
 	std::string movements =EncodeMovements(vDoubles);
 
 	// RFPatientsManager::get()->m_doctorid;
-	std::wstring sql = _T("INSERT INTO passivetrain (name,traintype,movements,timelen,doctorid) value(");
+	std::wstring sql = _T("INSERT INTO passivetrain (name,traintype,movements,timelen,doctorid) values (");
 	//sql += _T("'") + pParam->id + _T("',");
 	sql += _T("'") + pParam->name + _T("',");
 	sql += _T("'") + pParam->traintype + _T("',");

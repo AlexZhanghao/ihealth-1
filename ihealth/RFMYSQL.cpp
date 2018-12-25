@@ -73,6 +73,7 @@ int RFMYSQL::Close()
 int RFMYSQL::Exec(const char* sql)
 {
 	if (mysql_real_query(_db,sql,(unsigned int) strlen(sql))) {
+		TRACE("%s\n", mysql_error(_db));
 		return -1;
 	}
 

@@ -124,7 +124,7 @@ void PassiveControl::BeginMove(int index) {
 	in_move_status_ = true;
 
 	HANDLE handle;
-	handle= (HANDLE)_beginthreadex(NULL, 0, RecordOrMoveThread, this, 0, NULL);
+	handle = (HANDLE)_beginthreadex(NULL, 0, RecordOrMoveThread, this, 0, NULL);
 }
 void PassiveControl::StopMove() {
 	//关闭电机

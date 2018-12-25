@@ -158,7 +158,7 @@ void RFMainWindow::Notify(TNotifyUI& msg) {
 		CSliderUI* pSlider = static_cast<CSliderUI*>(msg.pSender);
 		if (pSlider) {
 			double v = 0.1 + (double)(pSlider->GetValue() / pSlider->GetMaxValue()) * 0.5;
-			m_robot.setDamping(v);
+			m_robot.SetDamping(v);
 		}
 	}
 }
@@ -1127,7 +1127,7 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 
 			game4->RunJS(_T("Checkpoint1();"));
 		}
-		m_robot.setDamping(0.1);
+		m_robot.SetDamping(0.1);
 	} 
 	if (*name == _T("nandu2")) {
 		CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
@@ -1136,7 +1136,7 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 			//game4->SetFile((std::wstring)respath);
 			game4->RunJS(_T("Checkpoint2();"));
 		}
-		m_robot.setDamping(0.3);
+		m_robot.SetDamping(0.3);
 	}
 	if (*name == _T("nandu3")) {
 		CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
@@ -1145,7 +1145,7 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 			//game4->SetFile((std::wstring)respath);
 			game4->RunJS(_T("Checkpoint3();"));
 		}
-		m_robot.setDamping(0.5);
+		m_robot.SetDamping(0.5);
 	}
 	return 0;
 }
@@ -1241,7 +1241,7 @@ LRESULT RFMainWindow::OnEmgSampleData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT RFMainWindow::OnTorqueError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	//直接主动和被动都停下来
-	m_robot.stopActiveMove();
+	m_robot.ActiveStopMove();
 	m_passive_train_action.StopPlay();
 
 	// 把主动运动的button状态改变过来
@@ -1255,7 +1255,7 @@ LRESULT RFMainWindow::OnTorqueError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 LRESULT RFMainWindow::OnPullForceError(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	//直接主动和被动都停下来
-	m_robot.stopActiveMove();
+	m_robot.ActiveStopMove();
 	m_passive_train_action.StopPlay();
 	// 把主动运动的button状态改变过来
 	CCheckBoxUI *pCheckBox1 = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_start")));
@@ -2520,7 +2520,7 @@ bool RFMainWindow::OnActiveTrainFromGame(void *pParam)
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
-	m_robot.stopActiveMove();
+	m_robot.ActiveStopMove();
 
 	OnPatientTrainFromActiveTrain(NULL);
 	//ShowActiveTrainPage();
@@ -2558,8 +2558,15 @@ bool RFMainWindow::OnPassiveTrainPlay(void *pParam)
 			playbyoder = false;
 		}
 		m_passive_train_action.StartPlay(m_current_passivetraininfos, playbyoder);
+
 	} else {
 		m_passive_train_action.StopPlay();
+
+		// 播放暂停音频
+		std::wstring voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/pause.wav");
+		if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
+			sndPlaySound(voice_path.c_str(), SND_ASYNC);
+		}
 	}
 	
 	return true;
@@ -2604,6 +2611,13 @@ bool RFMainWindow::OnPassiveTrainRecover(void *pParam)
 		return true;
 
 	m_robot.resetPos();
+
+	// 播放复位音频
+	std::wstring voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/reset.wav");
+	if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
+		sndPlaySound(voice_path.c_str(), SND_ASYNC);
+	}
+
 	return true;
 }
 
@@ -2965,7 +2979,7 @@ bool RFMainWindow::OnEMGModeStart(void *pParam)
 
 	CCheckBoxUI *pCheckBox = static_cast<CCheckBoxUI*>(pMsg->pSender);
 	if (!pCheckBox->GetCheck()) {
-		m_robot.startEMGMove();
+		m_robot.EMGStartMove();
 		m_emgmode_tracetime = 0;
 		m_emg_createtime = time(NULL);
 		for (int i = 0; i < 4; i++)
@@ -2976,7 +2990,7 @@ bool RFMainWindow::OnEMGModeStart(void *pParam)
 		m_emgmode_ydjd[1].clear();
 
 	} else {
-		m_robot.stopEMGMove();
+		m_robot.EMGStopMove();
 
 		SaveEMGTrainData();
 		m_emgmode_tracetime = 0;
@@ -2991,8 +3005,8 @@ bool RFMainWindow::OnEMGModeRecovery(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
-	if (m_robot.isEMGMove()) {
-		m_robot.stopEMGMove();
+	if (m_robot.EMGIsMove()) {
+		m_robot.EMGStopMove();
 	}
 
 	for (int i = 0; i < 4; i++)
@@ -3143,7 +3157,6 @@ bool RFMainWindow::OnGame2(void *pParam)
 	return true;
 }
 
-
 bool RFMainWindow::OnGame4Start(void *pParam)
 {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
@@ -3151,22 +3164,24 @@ bool RFMainWindow::OnGame4Start(void *pParam)
 		return true;
 
 	CCheckBoxUI *pCheckBox = static_cast<CCheckBoxUI*>(pMsg->pSender);
+	std::wstring voice_path;
 
 	if (!pCheckBox->GetCheck()) {
-		//s_active_game4_start = time(NULL);
-		//s_active_begin_recode = true;
-		//s_active_data[0].clear();
-		//s_active_data[1].clear();
-		//s_active_data_wl.clear();
-		m_robot.startActiveMove();
+		m_robot.ActiveStartMove();
+
+		// 主动开始时播放游戏背景音，播放完后自动循环
+		voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/active_game_plane_bg.wav");
+		if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
+			sndPlaySound(voice_path.c_str(), SND_LOOP | SND_ASYNC);
+		}
 	} else {
-		//s_active_begin_recode = false;
-		//s_active_game4_stop = time(NULL);
-		m_robot.stopActiveMove();
-		//SaveActiveGameDetectData();
-		//s_active_data[0].clear();
-		//s_active_data[1].clear();
-		//s_active_data_wl.clear();
+		m_robot.ActiveStopMove();
+
+		// 播放暂停音乐，并停止主动声音
+		voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/pause.wav");
+		if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
+			sndPlaySound(voice_path.c_str(), SND_ASYNC);
+		}
 	}
 
 	return true;
@@ -3178,7 +3193,13 @@ bool RFMainWindow::OnGame4Recovery(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
-	m_robot.stopActiveMove();
+	// 播放复位音乐，并停止主动声音
+	std::wstring voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/reset.wav");
+	if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
+		sndPlaySound(voice_path.c_str(), SND_ASYNC);
+	}
+
+	m_robot.ActiveStopMove();
 	m_robot.resetPos();
 	return true;
 }
@@ -3497,8 +3518,8 @@ bool RFMainWindow::OnReturnEvaluationHistoryPage(void *pParam)
 		OnEvaluation2(pParam);
 	} else {
 		OnEvaluation3(pParam);
-		m_robot.stopActiveMove();
-		m_robot.setDamping(0.3);
+		m_robot.ActiveStopMove();
+		m_robot.SetDamping(0.3);
 	}
 	
 	return true;
@@ -3769,8 +3790,8 @@ bool RFMainWindow::OnEVStart(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return false;
 
-	m_robot.stopActiveMove();
-	m_robot.startActiveMove();
+	m_robot.ActiveStopMove();
+	m_robot.ActiveStartMove();
 
 	StartEVDetect();
 	return true;
@@ -3783,7 +3804,7 @@ bool RFMainWindow::OnEVStop(void *pParam)
 		return false;
 
 	StopEVDetect();
-	m_robot.stopActiveMove();
+	m_robot.ActiveStopMove();
 
 	wchar_t temp[128];
 	ZeroMemory(temp,sizeof(TCHAR) * 20);
@@ -3804,7 +3825,7 @@ bool RFMainWindow::OnEVBegin1(void *pParam)
 	if (!pCb) {return true;}
 	if (!pCb->GetCheck()) {
 		double angle[2];
-		m_robot.getAngle(angle);
+		ControlCard::GetInstance().GetEncoderData(angle);
 		m_evydgn.zb1 = angle[0];
 
 		TCHAR szStartAngle[20];
@@ -3815,7 +3836,7 @@ bool RFMainWindow::OnEVBegin1(void *pParam)
 		plbl->SetText(szStartAngle);
 	} else {
 		double angle[2];
-		m_robot.getAngle(angle);
+		ControlCard::GetInstance().GetEncoderData(angle);
 		m_evydgn.zb2 = angle[0];
 		m_evydgn.zb = m_evydgn.zb2 - m_evydgn.zb1;
 		
@@ -3842,7 +3863,7 @@ bool RFMainWindow::OnEVBegin2(void *pParam)
 
 	if (!pCb->GetCheck()) {
 		double angle[2];
-		m_robot.getAngle(angle);
+		ControlCard::GetInstance().GetEncoderData(angle);
 		m_evydgn.jb1 = angle[1];
 
 		TCHAR szStartAngle[20];
@@ -3853,7 +3874,7 @@ bool RFMainWindow::OnEVBegin2(void *pParam)
 		plbl->SetText(szStartAngle);
 	} else {
 		double angle[2];
-		m_robot.getAngle(angle);
+		ControlCard::GetInstance().GetEncoderData(angle);
 		m_evydgn.jb2 = angle[1];
 		m_evydgn.jb = m_evydgn.jb2 - m_evydgn.jb1;
 
@@ -6678,24 +6699,17 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	if (!game4) {
 		return;
 	}
-
-	std::wstring gameState = game4->RunJS(_T("getGameOver();"));
-	if (gameState == _T("0") && !s_active_begin_recode) {
+	
+	// 根据主动运动是否进行来决定这个录制
+	bool start = RFMainWindow::MainWindow->m_robot.m_isActiveModeStart;
+	if (start && !s_active_begin_recode) {
 		RFMainWindow::MainWindow->StartGameRecord();
 	}
-	if (gameState == _T("1") && s_active_begin_recode) {
+	if (!start && s_active_begin_recode) {
 		RFMainWindow::MainWindow->StopGameRecord();
-	}
-	if (gameState != _T("0")) {
-		return;
 	}
 
 	std::wstring gameType = game4->RunJS(_T("getGameType();"));
-	/*if (gameType == RF_GAME_NAME_PLANE_GAOJI || gameType == RF_GAME_NAME_PLANE_ZHONGJI) {
-		if (!RFMainWindow::MainWindow->m_robot.m_isActiveModeStart) {
-			return;
-		}
-	}*/
 
 	bool fire = false;
 	bool t;
@@ -6703,7 +6717,7 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	RFMainWindow::MainWindow->m_robotEvent.GetValue(t, X, Y);
 
 
-	if (RFMainWindow::MainWindow->m_robot.isFire()) {
+	if (RFMainWindow::MainWindow->m_robot.IsFire()) {
 		if (temp_counter > 1) {
 			fire = true;
 			temp_counter = 0;
@@ -6722,7 +6736,7 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 			game4->RunJS(_T("fire();"));
 		}
 	} else if (gameType == RF_GAME_NAME_BIAOQIANG) {
-		int grip_strength = (int)RFMainWindow::MainWindow->m_robot.getWirstForce();
+		int grip_strength = (int)RFMainWindow::MainWindow->m_robot.GetGripStrength();
 		if (grip_strength > 0 && grip_strength < 200) {
 			wchar_t v[128];
 			wsprintf(v, _T("(%d);"), grip_strength);
@@ -6752,12 +6766,12 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 
 	if (s_active_begin_recode) {		
 		double angles[2];
-		RFMainWindow::MainWindow->m_robot.getAngle(angles);
+		ControlCard::GetInstance().GetEncoderData(angles);
 
 		s_active_data[0].push_back(angles[0]);
 		s_active_data[1].push_back(angles[1]);
 
-		double wl = RFMainWindow::MainWindow->m_robot.getWirstForce();
+		double wl = RFMainWindow::MainWindow->m_robot.GetGripStrength();
 		s_active_data_wl.push_back(wl);
 	}
 }
@@ -6769,7 +6783,7 @@ void OnEvDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 		return;
 	}
 
-	double wl = RFMainWindow::MainWindow->m_robot.getWirstForce();
+	double wl = RFMainWindow::MainWindow->m_robot.GetGripStrength();
 	s_ev_data_wl.push_back(wl);
 }
 
@@ -6891,7 +6905,7 @@ void OnEyeModeDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
 	if (RFMainWindow::MainWindow) {
 		double angles[2];
-		RFMainWindow::MainWindow->m_robot.getAngle(angles);
+		ControlCard::GetInstance().GetEncoderData(angles);
 	
 		s_eyemode_data[0].push_back(angles[0]);
 		s_eyemode_data[1].push_back(angles[1]);

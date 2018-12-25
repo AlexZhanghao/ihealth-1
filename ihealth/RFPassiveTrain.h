@@ -12,6 +12,7 @@ public:
 	RFPassiveTrain(void);
 	~RFPassiveTrain(void);
 
+	// 从数据库中加载被动运动的动作数据
 	int LoadPassiveTrainInfo();
 	// 将被动运动中录制的数据添加到数据库中
 	void AddPassiveTrainInfo(PassiveTrainInfo train);

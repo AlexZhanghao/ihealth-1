@@ -313,6 +313,6 @@ void boundaryDetection::check() {
 	 m_hWnd = hWnd;
  }
 
- void boundaryDetection::SetRobot(robot *pRobot) {
+ void boundaryDetection::SetRobot(Robot *pRobot) {
 	 m_pRobot = pRobot;
  }

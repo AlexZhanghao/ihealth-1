@@ -5,7 +5,7 @@
 #define TorqueError 0x0401
 #define PullForceError 0x0402
 
-class robot;
+class Robot;
 
 class boundaryDetection 
 {
@@ -43,7 +43,7 @@ public:
 	 void Set_hWnd(HWND hWnd);
      void check();
 		
-	 void SetRobot(robot *pRobot);
+	 void SetRobot(Robot *pRobot);
 	 bool is_error_happens_;
 
 private:
@@ -64,7 +64,7 @@ private:
 	 double m_Pos_S[3];
     
 	 HWND m_hWnd = NULL;
-	 robot *m_pRobot = NULL;
+	 Robot *m_pRobot = NULL;
 	 unsigned m_Handle;
 };
 

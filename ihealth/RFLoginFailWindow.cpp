@@ -215,7 +215,7 @@ bool RFDialog::OnCancelClose(void *pParam)
 		m_tickcount = 0;
 		::KillTimer(NULL, recordTimer);
 		recordTimer = NULL;
-		RFMainWindow::MainWindow->m_robot.stopTeach();
+		RFMainWindow::MainWindow->m_robot.PassiveStopRecord();
 	}
 
 	Close();
@@ -241,11 +241,11 @@ bool RFDialog::OnOKClose(void *pParam) {
 
 	if (!actionname.empty()) {
 		PassiveData current_record;
-		RFMainWindow::MainWindow->m_robot.GetCurrentRecord(current_record);
+		RFMainWindow::MainWindow->m_robot.PassiveGetCurrentRecord(current_record);
 
 		if (current_record.target_positions[0].size() > 0 && current_record.target_positions[1].size() > 0 &&
 			current_record.target_velocitys[0].size() > 0 && current_record.target_velocitys[1].size() > 0) {
-			RFMainWindow::MainWindow->m_robot.StoreCurrentRecord();
+			RFMainWindow::MainWindow->m_robot.PassiveStoreCurrentRecord();
 
 			PassiveTrainInfo train;
 			train.name = actionname;
@@ -291,7 +291,7 @@ bool RFDialog::OnOKClose(void *pParam) {
 
 			// 生成和动作名相关的语音
 			std::string text = "现在开始" + TGUTF16ToGBK(actionname) + "动作";
-			std::wstring filepathname = (std::wstring)m_pm.GetResourcePath() + _T("/voice/") + actionname + _T(".wav");
+			std::wstring filepathname = (std::wstring)m_pm.GetResourcePath() + _T("voice/") + actionname + _T(".wav");
 
 			TTSSampleData *pTTSSampleData = new TTSSampleData;
 			pTTSSampleData->filepath = TGUTF16ToGBK(filepathname);
@@ -433,7 +433,7 @@ bool RFDialog::OnRecordPasvTrain(void *pParam) {
 	if (!pStart->GetCheck()) {
 		//这个是开始录制
 		m_tickcount = 0;
-		RFMainWindow::MainWindow->m_robot.startTeach();
+		RFMainWindow::MainWindow->m_robot.PassiveBeginRecord();
 		if (recordTimer) {
 			::KillTimer(NULL, recordTimer);
 		}
@@ -443,7 +443,7 @@ bool RFDialog::OnRecordPasvTrain(void *pParam) {
 		m_tickcount = 0;
 		::KillTimer(NULL, recordTimer);
 		recordTimer = NULL;
-		RFMainWindow::MainWindow->m_robot.stopTeach();
+		RFMainWindow::MainWindow->m_robot.PassiveStopRecord();
 	}
 	return true;
 }

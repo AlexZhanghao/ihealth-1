@@ -16,12 +16,14 @@ int FormatTimeValue(std::wstring time)
 	return minute * 60 * 1000 + second * 1000;
 }
 
+// 这是在运行被动运动时的timer，每200ms运行一次。
 void OnTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
 	RFPassiveTrainAction* action = &RFMainWindow::MainWindow->m_passive_train_action;	
 	if (!action) {
 		return;
 	}
 
+	// 动作开始前播放动作的提示音
 	std::wstring mediapath = action->m_curmedia.pathFileName;
 	if (action->m_timeplay == 0 && !mediapath.empty() && _waccess(mediapath.c_str(), 0) != -1) {
 		sndPlaySound(action->m_curmedia.pathFileName.c_str(), SND_ASYNC);
@@ -31,15 +33,17 @@ void OnTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
 	MEDIA media = action->m_curmedia;
 	int timelen = FormatTimeValue(media.train.timelen);
 	if (action->m_timeplay < timelen) {
+		// 当一个动作没有执行完的时候，需要随时更新动作进行的时间
 		RFMainWindow::MainWindow->SetPassiveTrainProgress(action->m_timeplay, timelen, true);
 	} else {
-		if (!RFMainWindow::MainWindow->m_robot.isMoving()) {
-			action->SaveMoveingData();
+		// 动作执行完后，需要将当前训练数据保存到数据库，并开始下一个数据
+		if (!RFMainWindow::MainWindow->m_robot.PassiveIsBusy()) {
+			action->SaveMovingData();
 			if (action->m_medias.size() > 0) {
 				if (action->m_orderplay) {
 					action->m_curmedia = action->PopOrderMedia();
 				} else {
-					action->m_curmedia = action->PopAutoMedia();
+					action->m_curmedia = action->PopRandomMedia();
 				}
 
 				action->m_timeplay = 0;
@@ -83,7 +87,7 @@ void RFPassiveTrainAction::StartPlay(std::list<MEDIA>& medias, bool orderplay)
 	if (orderplay) {
 		m_curmedia = PopOrderMedia();
 	} else {
-		m_curmedia = PopAutoMedia();
+		m_curmedia = PopRandomMedia();
 	}
 	
 	m_currenttimer = ::SetTimer(NULL, RF_TIMER_ID, RF_TIMER_ELAPSE, (TIMERPROC)OnTimer);
@@ -93,7 +97,7 @@ void RFPassiveTrainAction::StopPlay()
 {
 	m_timeplay = 0;
 	m_isPlaying = false;
-	RFMainWindow::MainWindow->m_robot.stopPasvMove();
+	RFMainWindow::MainWindow->m_robot.PassiveStopMove();
 	::KillTimer(NULL, m_currenttimer);
 	RFMainWindow::MainWindow->SetPassiveTrainProgress(m_timeplay, FormatTimeValue(_T("01:40")), true);
 }
@@ -108,7 +112,7 @@ void RFPassiveTrainAction::PlayNext(bool orderplay)
 	if (m_orderplay) {
 		m_curmedia = PopOrderMedia();
 	} else {
-		m_curmedia = PopAutoMedia();
+		m_curmedia = PopRandomMedia();
 	}
 
 	m_timeplay = 0;
@@ -143,7 +147,7 @@ void RFPassiveTrainAction::SetPlayOrder(bool orderplay)
 	m_orderplay = orderplay;
 }
 
-MEDIA RFPassiveTrainAction::PopAutoMedia()
+MEDIA RFPassiveTrainAction::PopRandomMedia()
 {
 	if (m_medias.size() < 2) {
 		return PopOrderMedia();
@@ -173,11 +177,11 @@ MEDIA RFPassiveTrainAction::PopAutoMedia()
 
 	if (RFPassiveTrain::get()->m_robot_indexs.find(media.train.id) != RFPassiveTrain::get()->m_robot_indexs.end()) {
 		int index = RFPassiveTrain::get()->m_robot_indexs[media.train.id];
-		RFMainWindow::MainWindow->m_robot.stopPasvMove();
+		RFMainWindow::MainWindow->m_robot.PassiveStopMove();
 		::Sleep(300U);
-		RFMainWindow::MainWindow->m_robot.startPasvMove(index);
+		RFMainWindow::MainWindow->m_robot.PassiveStartMove(index);
 	} else {
-		PopAutoMedia();
+		PopRandomMedia();
 	}
 	return media;
 }
@@ -198,9 +202,9 @@ MEDIA RFPassiveTrainAction::PopOrderMedia()
 
 	if (RFPassiveTrain::get()->m_robot_indexs.find(media.train.id) != RFPassiveTrain::get()->m_robot_indexs.end()) {
 		int index = RFPassiveTrain::get()->m_robot_indexs[media.train.id];
-		RFMainWindow::MainWindow->m_robot.stopPasvMove();
+		RFMainWindow::MainWindow->m_robot.PassiveStopMove();
 		::Sleep(300U);
-		RFMainWindow::MainWindow->m_robot.startPasvMove(index);
+		RFMainWindow::MainWindow->m_robot.PassiveStartMove(index);
 	} else {
 		PopOrderMedia();
 	}
@@ -208,7 +212,7 @@ MEDIA RFPassiveTrainAction::PopOrderMedia()
 	return media;
 }
 
-void RFPassiveTrainAction::SaveMoveingData()
+void RFPassiveTrainAction::SaveMovingData()
 {
 	time_t finish_time = time(NULL);
 
@@ -228,13 +232,13 @@ void RFPassiveTrainAction::SaveMoveingData()
 	details.totaltreattime = details.traintime;
 	details.recoverdetail = details.content;
 
-	PassiveData teach;
-	RFMainWindow::MainWindow->m_robot.getCurrentPasvMove(teach);
+	PassiveData m;
+	RFMainWindow::MainWindow->m_robot.PassiveGetCurrentMove(m);
 
 	//details.target_pos[0] = teach.target_positions[0];
 	//details.target_pos[1] = teach.target_positions[1];
-	details.target_vel[0] = teach.target_velocitys[0];
-	details.target_vel[1] = teach.target_velocitys[1];
+	details.target_vel[0] = m.target_velocitys[0];
+	details.target_vel[1] = m.target_velocitys[1];
 	
 	RFPatientsTrainDetails::get()->AddPatientTrainDetails(details);
 }

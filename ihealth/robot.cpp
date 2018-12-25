@@ -11,7 +11,7 @@
 MMRESULT Mtimer_ID=0;
 UINT wAccuracy=0;
 
-robot::robot() {
+Robot::Robot() {
 	bDetect = nullptr;
 	bDetect = new boundaryDetection();
 	bDetect->SetRobot(this);
@@ -37,7 +37,7 @@ robot::robot() {
 	m_isPasvModeStart = false;
 }
 
-robot::~robot() {
+Robot::~Robot() {
 	if (pasvMode != NULL)
 		delete pasvMode;
 	if (bDetect != NULL) {
@@ -56,149 +56,121 @@ unsigned __stdcall PositionResetThread(void *) {
 	return 0;
 }
 
-void robot::ClearPassiveMovementSet()
-{
+void Robot::PassiveClearMovementSet() {
 	pasvMode->ClearMovementSet();
 }
 
-void robot::StoreMovement(const PassiveData& move)
-{
+void Robot::PassiveStoreMovement(const PassiveData& move) {
 	pasvMode->StoreMovement(move);
 }
 
-bool robot::isMoving()
-{
+bool Robot::PassiveIsBusy() {
 	return pasvMode->IsBusy();
 }
 
-void robot::startPasvMove(int index)
-{
-	//if (ctrlCard->IsCardInitial()) {
+void Robot::PassiveStartMove(int index) {
 	if (m_isPasvModeStart == false) {
 		m_isPasvModeStart = true;
 		pasvMode->BeginMove(index);
 	}
-	//}
 }
-void robot::stopPasvMove()
-{
-	//if (ctrlCard->IsCardInitial()) {
+
+void Robot::PassiveStopMove() {
 	if (m_isPasvModeStart == true) {
 		m_isPasvModeStart = false;
 		pasvMode->StopMove();
 	}
-	//}
 }
-void robot::getCurrentPasvMove(PassiveData& teach)
-{
-	//if (ctrlCard->IsCardInitial()) {
-		pasvMode->GetCurrentMove(teach);
-	//}
-}
-void robot::startTeach() {
-		pasvMode->BeginRecord();
-}
-void robot::stopTeach()
-{
-	//if (ctrlCard->IsCardInitial()) {
-		pasvMode->StopRecord();
-	//}
+void Robot::PassiveGetCurrentMove(PassiveData& teach) {
+	pasvMode->GetCurrentMove(teach);
 }
 
-void robot::GetCurrentRecord(PassiveData& teach)
-{
-	//if (ctrlCard->IsCardInitial()) {
+void Robot::PassiveBeginRecord() {
+	pasvMode->BeginRecord();
+}
+
+void Robot::PassiveStopRecord() {
+	pasvMode->StopRecord();
+}
+
+void Robot::PassiveGetCurrentRecord(PassiveData& teach) {
 		pasvMode->GetCurrentRecord(teach);
-	//}
 }
 
-void robot::StoreCurrentRecord() {
+void Robot::PassiveStoreCurrentRecord() {
 	pasvMode->StoreCurrentRecord();
 }
 
-void robot::startActiveMove() {
+void Robot::ActiveStartMove() {
 	if (!m_isActiveModeStart) {
 		activeCtrl->StartMove();
 		m_isActiveModeStart = true;
 	}
 }
 
-void robot::stopActiveMove()
-{
-	//if (ctrlCard->IsCardInitial()) {
+void Robot::ActiveStopMove() {
 	if (m_isActiveModeStart) {
 		activeCtrl->StopMove();
 		m_isActiveModeStart = false;
 	}
-	//}
-}
-void robot::getAngle(double angles[2])
-{
 }
 
-double robot::getWirstForce() {
+double Robot::GetGripStrength() {
 	double output;
 	DataAcquisition::GetInstance().AcquisiteGripData(&output);
 	return output;
 }
-bool robot::isFire()
-{
-	//if (ctrlCard->IsCardInitial()) {
-		return activeCtrl->IsFire();
-	//}
-	//return false;
+
+bool Robot::IsFire() {
+	return activeCtrl->IsFire();
 }
 
-void robot::getPlanePos(short w, short h, double XY[2])
-{
+void Robot::GetPlanePos(short w, short h, double XY[2]) {
 	activeCtrl->CalculatePlaneXY(w, h, XY);
 }
 
-void robot::setDamping(float FC/* =0.1 */)
-{
+void Robot::SetDamping(float FC/* =0.1 */) {
 	activeCtrl->SetDamping(FC);
 }
 
 
-void robot::setEyeVel(double factor)
-{
+void Robot::setEyeVel(double factor) {
 	eyeModeCtl->setVel(factor);
 }
-void robot::eyeCalibrate()
-{
+
+void Robot::eyeCalibrate() {
 	eyeModeCtl->calibrate();
 }
-void robot::startEyeMove()
-{
+
+void Robot::startEyeMove() {
 	eyeModeCtl->start();
 }
-void robot::stopEyeMove()
-{
+
+void Robot::stopEyeMove() {
 	eyeModeCtl->stop();
 }
-void robot::enterEyeMode()
-{
+
+void Robot::enterEyeMode() {
 	eyeModeCtl->enter();
 }
-void robot::exitEyeMode()
-{
+
+void Robot::exitEyeMode() {
 	eyeModeCtl->exit();
 }
 
-void robot::getLeftRGB24(unsigned char* data, int _width, int _height)
-{
+void Robot::getLeftRGB24(unsigned char* data, int _width, int _height) {
 	eyeModeCtl->getRGB24(data, _width, _height, EyeMode::LEFT);
 }
-void robot::getRightRGB24(unsigned char* data, int _width, int _height)
-{
+
+void Robot::getRightRGB24(unsigned char* data, int _width, int _height) {
 	eyeModeCtl->getRGB24(data, _width, _height, EyeMode::RIGHT);
 }
 
-void robot::resetPos() {
+void Robot::resetPos() {
 	_beginthreadex(NULL, 0, PositionResetThread, NULL, 0, NULL);
 }
 
-void robot::setWindow(HWND hWnd)
+void Robot::setWindow(HWND hWnd)
 {
 	m_hWnd = hWnd;
 	bDetect->Set_hWnd(hWnd);
@@ -207,12 +179,12 @@ void robot::setWindow(HWND hWnd)
 	EMGContrl->m_hWnd = hWnd;
 }
 
-bool robot::isEMGMove()
+bool Robot::EMGIsMove()
 {
 	return EMGContrl->isBeginMove;
 }
 
-void robot::startEMGMove()
+void Robot::EMGStartMove()
 {
 	//if (ctrlCard->IsCardInitial()) {
 	if (m_isEmgModeStart == false) {
@@ -221,7 +193,7 @@ void robot::startEMGMove()
 	}	
 	//}
 }
-void robot::stopEMGMove()
+void Robot::EMGStopMove()
 {
 	//if (ctrlCard->IsCardInitial()) {
 	if (m_isEmgModeStart == true) {
@@ -231,12 +203,12 @@ void robot::stopEMGMove()
 	//}
 }
 
-double robot::getEMGSignal(int index /* = 0 */)
+double Robot::EMGGetSignal(int index /* = 0 */)
 {
 	return EMGContrl->getRawData(index);
 }
 
-void robot::stopResetPos()
+void Robot::stopResetPos()
 {
 	if(Mtimer_ID!=0)
 		timeKillEvent(Mtimer_ID);
@@ -262,7 +234,7 @@ void getSensorData(bool Travel_Switch[4])
 	Travel_Switch[3] = di_ch[19];//1号电机MEL信号-肩部电机
 }
 
-bool robot::IsPassiveRecording() {
+bool Robot::IsPassiveRecording() {
 	return pasvMode->in_record_status_;
 }
 

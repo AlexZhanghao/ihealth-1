@@ -21,10 +21,12 @@ public:
 
 	void SetPlayOrder(bool orderplay);
 
-	MEDIA PopAutoMedia();
+	// 随机运行被动动作
+	MEDIA PopRandomMedia();
+	// 按照列表顺序依次运行被动动作
 	MEDIA PopOrderMedia();
 
-	void SaveMoveingData();
+	void SaveMovingData();
 	time_t			m_movement_createtime;
 
 	std::list<MEDIA> m_medias_old;
