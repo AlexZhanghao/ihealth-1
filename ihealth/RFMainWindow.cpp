@@ -23,6 +23,7 @@
 static bool	  s_active_begin_recode = false;
 static time_t s_active_game4_start = 0;
 static time_t s_active_game4_stop = 0;
+static int active_timer = 0;
 
 static std::vector<double>	s_active_data[2];
 static std::vector<double>  s_active_data_wl;
@@ -451,6 +452,9 @@ void RFMainWindow::BindManagerPatientPageEvent()
 
 	CButtonUI* btn_game2 = static_cast<CButtonUI*>(m_pm.FindControl(_T("btn_game2")));
 	btn_game2->OnNotify += MakeDelegate(this, &RFMainWindow::OnGame2);
+
+	// 主动运动中的计时器
+	CLabelUI* active_train_timer = static_cast<CButtonUI*>(m_pm.FindControl(_T("active_train_timer")));
 
 	CCheckBoxUI* game4_nandu_select = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("game4_nandu_select")));
 	game4_nandu_select->OnNotify += MakeDelegate(this, &RFMainWindow::OnGame4NanduSetingMenu); 
@@ -1114,6 +1118,10 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 		RFPatientsManager::get();
 		ShowLoginPage();
 	}
+	if (*name == _T("menu_active_timer")) {
+		CLabelUI *timer = static_cast<CLabelUI *>(m_pm.FindControl(_T("active_train_timer")));
+		timer->SetVisible(true);
+	}
 
 	if (*name == _T("menu_exit_system")) {
 		::PostQuitMessage(0L);
@@ -1380,8 +1388,7 @@ bool RFMainWindow::OnGame4NanduSetingMenu(void *pParam)
 	//pMenu->ResizeMenu();
 }
 
-bool RFMainWindow::OnPersonerCenterMenu(void *pParam)
-{
+bool RFMainWindow::OnPersonerCenterMenu(void *pParam) {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
 		return false;
@@ -1395,7 +1402,13 @@ bool RFMainWindow::OnPersonerCenterMenu(void *pParam)
 
 	::ClientToScreen(m_hWnd, &point);
 
-	CMenuWnd* pMenu = CMenuWnd::CreateMenu(NULL, _T("personer_menu.xml"), point, &m_pm);
+	CDuiString str = pMsg->pSender->GetName();
+	CMenuWnd* pMenu = nullptr;
+	if (str == _T("active_train_game4_welcom")) {
+		pMenu = CMenuWnd::CreateMenu(NULL, _T("personer_menu_active.xml"), point, &m_pm);
+	} else {
+		pMenu = CMenuWnd::CreateMenu(NULL, _T("personer_menu.xml"), point, &m_pm);
+	}
 }
 
 
@@ -2504,7 +2517,7 @@ bool RFMainWindow::OnActiveTrain(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
-	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("train_main_page_welcom")));
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_page_welcom")));
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
 	ShowActiveTrainPage();
@@ -3057,6 +3070,9 @@ bool RFMainWindow::OnZhudongBiaoqiang(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
+	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
+
 	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
 	pLabelUI->SetText(_T("刀枪不入躲避"));
 
@@ -3079,6 +3095,9 @@ bool RFMainWindow::OnZhudongDuimutou(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
+	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
+
 	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
 	pLabelUI->SetText(_T("弹球打砖块"));
 
@@ -3099,7 +3118,8 @@ bool RFMainWindow::OnGame4(void *pParam)
 	//TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	//if (pMsg->sType != _T("click"))
 	//	return true;
-
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
+	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 	
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
@@ -3121,6 +3141,8 @@ bool RFMainWindow::OnGame3(void *pParam)
 	if (pMsg->sType != _T("click"))
 		return true;
 
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
+	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
@@ -3142,6 +3164,8 @@ bool RFMainWindow::OnGame2(void *pParam)
 	//if (pMsg->sType != _T("click"))
 	//	return true;
 
+	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
+	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
@@ -6699,9 +6723,28 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	if (!game4) {
 		return;
 	}
-	
-	// 根据主动运动是否进行来决定这个录制
+
+	// 得到主动运动是否进行
 	bool start = RFMainWindow::MainWindow->m_robot.m_isActiveModeStart;
+
+	// 根据计时器计时来改变
+	if (start) {
+		active_timer += 200;
+		if (active_timer % 1000 == 0) {
+			wchar_t time[32];
+			int second = (active_timer / 1000) % 60;
+			int minute = (active_timer / 60000) % 60;
+			int hour = active_timer / 360000;
+			std::wstring format = (_T("训练用时:"));
+			format += (hour < 10) ? _T("0%d:") : _T("%d:");
+			format += (minute < 10) ? _T("0%d:") : _T("%d:");
+			format += (second < 10) ? _T("0%d") : _T("%d");
+			wsprintf(time, format.c_str(), hour, minute, second);
+			CLabelUI *timer_label = static_cast<CLabelUI *>(RFMainWindow::MainWindow->m_pm.FindControl(_T("active_train_timer")));
+			timer_label->SetText(time);
+		}
+	}
+	// 根据主动运动是否进行来决定是否将训练记录存放到数据库中
 	if (start && !s_active_begin_recode) {
 		RFMainWindow::MainWindow->StartGameRecord();
 	}
@@ -6883,6 +6926,9 @@ void RFMainWindow::StartActiveGameDetect()
 		return;
 	}
 
+	// 进入Timer时，把显示用计时器的值清0
+	active_timer = 0;
+
 	s_activeGameDetectTimer = ::SetTimer(NULL, 999, 200U, (TIMERPROC)OnActiveGameDetectTimer);
 
 	//std::wstring width = game4->RunJS(_T("getWidth();"));
@@ -6898,6 +6944,11 @@ void RFMainWindow::StopActiveGameDetect()
 		::KillTimer(NULL, s_activeGameDetectTimer);
 		s_activeGameDetectTimer = NULL;
 	}
+
+	// 将计时器归零
+	CLabelUI *timer = static_cast<CLabelUI *>(m_pm.FindControl(_T("active_train_timer")));
+	timer->SetText(_T("训练用时:00:00:00"));
+
 	m_robotEvent.Stop();
 }
 

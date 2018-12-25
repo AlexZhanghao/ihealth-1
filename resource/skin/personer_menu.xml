@@ -8,5 +8,6 @@
 		<MenuElement name="menu_set_system" width="215" text="系统设置" height="59"/>
         <MenuElement name="menu_change_account" width="215" text="切换账号" height="59"/>
         <MenuElement name="menu_exit_system" width="215" text="退出系统" height="59"/>
+        <MenuElement name="menu_active_timer" width="215" text="启用计时器" height="59" visible="false" />
     </Menu>
 </Window>
