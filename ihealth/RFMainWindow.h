@@ -205,6 +205,7 @@ public:
 	bool		OnGame4Start(void *pParam);
 	bool		OnGame4Recovery(void *pParam);
 	bool		OnMusicItemDelete(void *pParam);
+	bool        OnGripStrengthClicked(void *pParam);
 
 	static int	OnSearchOK(EventArg *pArg);
 	static int  OnFilterOK(EventArg* pArg);
@@ -380,6 +381,8 @@ public:
 	RFFMA							m_fma;
 	int								m_evalution_type;
 	EvaluationYDGN					m_evydgn;
+	// 握力传感器是否使能
+	bool m_grip_strength_enable = true;
 };
 
 

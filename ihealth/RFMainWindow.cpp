@@ -535,6 +535,9 @@ void RFMainWindow::BindManagerPatientPageEvent()
 	CButtonUI* evaluation_begin2 = static_cast<CButtonUI*>(m_pm.FindControl(_T("evaluation_begin2")));
 	evaluation_begin2->OnNotify += MakeDelegate(this, &RFMainWindow::OnEVBegin2);
 	
+	// 握力传感器开关的响应函数绑定
+	CCheckBoxUI* grip_strength_enable = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("grip_strength_enable")));
+	grip_strength_enable->OnNotify += MakeDelegate(this, &RFMainWindow::OnGripStrengthClicked);
 }
 
 LRESULT RFMainWindow::OnCommunicate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1122,7 +1125,7 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 		CLabelUI *timer = static_cast<CLabelUI *>(m_pm.FindControl(_T("active_train_timer")));
 		timer->SetVisible(true);
 	}
-
+	
 	if (*name == _T("menu_exit_system")) {
 		::PostQuitMessage(0L);
 	}
@@ -3264,6 +3267,22 @@ bool RFMainWindow::OnMusicItemDelete(void *pParam)
 	}
 	
 	return true;
+}
+
+bool RFMainWindow::OnGripStrengthClicked(void *pParam) {
+	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
+	if (pMsg->sType != _T("click"))
+		return true;
+
+	CCheckBoxUI *pCheckBox = static_cast<CCheckBoxUI*>(pMsg->pSender);
+	if (!pCheckBox->GetCheck()) {
+		m_grip_strength_enable = false;
+	} else {
+		// 点击这里之后，图标变成ON，这个时候握力传感器是启用的
+		m_grip_strength_enable = true;
+	}
+	return true;
+
 }
 
 bool RFMainWindow::OnEvaluation1(void *pParam)
@@ -6760,13 +6779,19 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	RFMainWindow::MainWindow->m_robotEvent.GetValue(t, X, Y);
 
 
-	if (RFMainWindow::MainWindow->m_robot.IsFire()) {
-		if (temp_counter > 1) {
-			fire = true;
-			temp_counter = 0;
-		} else {
-			temp_counter++;
+	// 这里采集握力传感器的值决定是否fire，只有在使能的情况下才进行采集
+	if (RFMainWindow::MainWindow->m_grip_strength_enable) {
+		if (RFMainWindow::MainWindow->m_robot.IsFire()) {
+			// timer 200ms一次，这个temp_counter就是为了让fire的速度不那么快
+			if (temp_counter > 1) {
+				fire = true;
+				temp_counter = 0;
+			} else {
+				temp_counter++;
+			}
 		}
+	} else {
+		fire = true;
 	}
 	std::wstring width_str = game4->RunJS(_T("getWidth();"));
 	std::wstring height_str = game4->RunJS(_T("getHeight();"));
