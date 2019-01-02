@@ -184,9 +184,6 @@ unsigned int __stdcall EyeThread(PVOID pParam)
 			}
 			ControlCard::GetInstance().VelocityMove(ControlCard::ElbowAxisId, velocity[1]);
 			ControlCard::GetInstance().VelocityMove(ControlCard::ShoulderAxisId, velocity[0]);
-			char message_tracing[1024];
-			sprintf(message_tracing, "In eyectrl Mode output elbow Vel is %0.2f,elbow Swith is %d-%d", velocity[1], elbowSwitch[0], elbowSwitch[1]);
-			LOG1(message_tracing);
 		}
 	}
 	return 0;

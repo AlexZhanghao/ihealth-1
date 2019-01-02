@@ -304,11 +304,15 @@ public:
 
 
 public:
+	// 创建数据库线程实例
 	static RFMySQLThread* Create();
+	// 回收数据库线程资源
 	static void Release(RFMySQLThread *&pThread);
-
+	// 建立数据库连接
 	static int Connect(EventArg *pArg);
+	// 数据库重连
 	static int ReConnect(EventArg *pArg);
+	// 数据库用户登录
 	static int Login(EventArg *pArg);
 
 	static int Load(EventArg* pArg);

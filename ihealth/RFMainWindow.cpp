@@ -18,6 +18,8 @@
 #include "Log.h"
 #include "RFEvaluationData.h"
 
+#include <cstdlib>
+
 
 
 static bool	  s_active_begin_recode = false;
@@ -431,16 +433,16 @@ void RFMainWindow::BindManagerPatientPageEvent()
 	CButtonUI* emg_mode_recovery = static_cast<CButtonUI*>(m_pm.FindControl(_T("emg_mode_recovery")));
 	emg_mode_recovery->OnNotify += MakeDelegate(this, &RFMainWindow::OnEMGModeRecovery);
 
-	CButtonUI* zhudong_game1 = static_cast<CButtonUI*>(m_pm.FindControl(_T("zhudong_game1")));
-	if (zhudong_game1 != NULL) zhudong_game1->OnNotify += MakeDelegate(this, &RFMainWindow::OnZhudongFeiji);
+	CButtonUI* active_game_plane_battle = static_cast<CButtonUI*>(m_pm.FindControl(_T("active_game_plane_battle")));
+	if (active_game_plane_battle != NULL) active_game_plane_battle->OnNotify += MakeDelegate(this, &RFMainWindow::OnActiveGamePlaneBattle);
 
 
-	CButtonUI* zhudong_game2 = static_cast<CButtonUI*>(m_pm.FindControl(_T("zhudong_game2")));
-	if (zhudong_game2 != NULL) zhudong_game2->OnNotify += MakeDelegate(this, &RFMainWindow::OnZhudongBiaoqiang);
+	CButtonUI* active_game_clean_window = static_cast<CButtonUI*>(m_pm.FindControl(_T("active_game_clean_window")));
+	if (active_game_clean_window != NULL) active_game_clean_window->OnNotify += MakeDelegate(this, &RFMainWindow::OnActiveGameCleanWindow);
 
 
-	CButtonUI* zhudong_game3 = static_cast<CButtonUI*>(m_pm.FindControl(_T("zhudong_game3")));
-	if (zhudong_game3 != NULL) zhudong_game3->OnNotify += MakeDelegate(this, &RFMainWindow::OnZhudongDuimutou);
+	CButtonUI* active_game_fry_egg = static_cast<CButtonUI*>(m_pm.FindControl(_T("active_game_fry_egg")));
+	if (active_game_fry_egg != NULL) active_game_fry_egg->OnNotify += MakeDelegate(this, &RFMainWindow::OnActiveGameFryEgg);
 
 	CButtonUI* btn_game4 = static_cast<CButtonUI*>(m_pm.FindControl(_T("btn_game4")));
 	btn_game4->OnNotify += MakeDelegate(this, &RFMainWindow::OnGame4);
@@ -3048,7 +3050,7 @@ bool RFMainWindow::OnEMGModeRecovery(void *pParam)
 	return true;
 }
 
-bool RFMainWindow::OnZhudongFeiji(void *pParam)
+bool RFMainWindow::OnActiveGamePlaneBattle(void *pParam)
 {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
@@ -3067,7 +3069,7 @@ bool RFMainWindow::OnZhudongFeiji(void *pParam)
 	//active_train_page_list->SetVisible(true);
 }
 
-bool RFMainWindow::OnZhudongBiaoqiang(void *pParam)
+bool RFMainWindow::OnActiveGameCleanWindow(void *pParam)
 {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
@@ -3077,22 +3079,22 @@ bool RFMainWindow::OnZhudongBiaoqiang(void *pParam)
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
 	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
-	pLabelUI->SetText(_T("刀枪不入躲避"));
+	pLabelUI->SetText(_T("擦玻璃"));
 
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
-		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/biaoqiang/index.html");
+		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/clean_window/index.html");
 		game4->SetFile((std::wstring)respath);
 	}
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
 	game4_start->SetVisible(true);
 
-	ShowGame4();
+	ShowActiveGameWebkit();
 	return true;
 }
 
-bool RFMainWindow::OnZhudongDuimutou(void *pParam)
+bool RFMainWindow::OnActiveGameFryEgg(void *pParam)
 {
 	TNotifyUI *pMsg = static_cast<TNotifyUI*>(pParam);
 	if (pMsg->sType != _T("click"))
@@ -3102,17 +3104,17 @@ bool RFMainWindow::OnZhudongDuimutou(void *pParam)
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
 	CLabelUI* pLabelUI = static_cast<CLabelUI*>(m_pm.FindControl(_T("gamename")));
-	pLabelUI->SetText(_T("弹球打砖块"));
+	pLabelUI->SetText(_T("煎鸡蛋"));
 
 	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
 	if (game4) {
-		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/duimutou/index.html");
+		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/fry_egg/index.html");
 		game4->SetFile((std::wstring)respath);
 	}
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
 	game4_start->SetVisible(true);
-	ShowGame4();
+	ShowActiveGameWebkit();
 	return true;
 }
 
@@ -3132,7 +3134,7 @@ bool RFMainWindow::OnGame4(void *pParam)
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
 	game4_start->SetVisible(false);
-	ShowGame4();
+	ShowActiveGameWebkit();
 	
 
 	return true;
@@ -3155,7 +3157,7 @@ bool RFMainWindow::OnGame3(void *pParam)
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
 	game4_start->SetVisible(true);
-	ShowGame4();
+	ShowActiveGameWebkit();
 
 
 	return true;
@@ -3170,15 +3172,15 @@ bool RFMainWindow::OnGame2(void *pParam)
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_game4_welcom")));
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
-	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
-	if (game4) {
+	CWkeWebkitUI* game_webkit = static_cast<CWkeWebkitUI*>(m_pm.FindControl(_T("game4")));
+	if (game_webkit) {
 		CDuiString respath = CPaintManagerUI::GetResourcePath() + _T("/Plane2/index.html");
-		game4->SetFile((std::wstring)respath);
+		game_webkit->SetFile((std::wstring)respath);
 	}
 
 	CButtonUI* game4_start = static_cast<CButtonUI*>(m_pm.FindControl(_T("game4_start")));
 	game4_start->SetVisible(true);
-	ShowGame4();
+	ShowActiveGameWebkit();
 
 
 	return true;
@@ -5099,7 +5101,7 @@ void RFMainWindow::ShowEvaluationPage()
 	m_systemset_info_edit_page->SetVisible(false);
 }
 
-void RFMainWindow::ShowGame4()
+void RFMainWindow::ShowActiveGameWebkit()
 {
 	m_main_page->SetVisible(false);
 	m_patient_select_page->SetVisible(false);
@@ -6738,8 +6740,8 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 		return;
 	}
 
-	CWkeWebkitUI* game4 = static_cast<CWkeWebkitUI*>(RFMainWindow::MainWindow->m_pm.FindControl(_T("game4")));
-	if (!game4) {
+	CWkeWebkitUI* game_webkit = static_cast<CWkeWebkitUI*>(RFMainWindow::MainWindow->m_pm.FindControl(_T("game4")));
+	if (!game_webkit) {
 		return;
 	}
 
@@ -6771,14 +6773,7 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 		RFMainWindow::MainWindow->StopGameRecord();
 	}
 
-	std::wstring gameType = game4->RunJS(_T("getGameType();"));
-
 	bool fire = false;
-	bool t;
-	int X = 0, Y = 0, width = 0, height = 0;
-	RFMainWindow::MainWindow->m_robotEvent.GetValue(t, X, Y);
-
-
 	// 这里采集握力传感器的值决定是否fire，只有在使能的情况下才进行采集
 	if (RFMainWindow::MainWindow->m_grip_strength_enable) {
 		if (RFMainWindow::MainWindow->m_robot.IsFire()) {
@@ -6793,43 +6788,46 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 	} else {
 		fire = true;
 	}
-	std::wstring width_str = game4->RunJS(_T("getWidth();"));
-	std::wstring height_str = game4->RunJS(_T("getHeight();"));
-	width = _wtoi(width_str.c_str());
-	height = _wtoi(height_str.c_str());
-	//width = RFMainWindow::MainWindow->m_robotEvent.m_nWidth;
-	//height = RFMainWindow::MainWindow->m_robotEvent.m_nHeight;
-	if (gameType == RF_GAME_NAME_DUIMUTOU || gameType == RF_GAME_NAME_PLANE_CHUJI) {
-		if (fire) {
-			game4->RunJS(_T("fire();"));
-		}
-	} else if (gameType == RF_GAME_NAME_BIAOQIANG) {
-		int grip_strength = (int)RFMainWindow::MainWindow->m_robot.GetGripStrength();
-		if (grip_strength > 0 && grip_strength < 200) {
-			wchar_t v[128];
-			wsprintf(v, _T("(%d);"), grip_strength);
-			std::wstring jsAction = _T("fire");
-			jsAction += v;
-			game4->RunJS(jsAction);
-		}
-	} else {
-		if (fire) {
-			game4->RunJS(_T("fire();"));
-		}
-		
-		char message_tracing[1024];
-		sprintf(message_tracing, "move to (%d, %d)", X, Y);
-		LOG1(message_tracing);
 
-		X = max(0, X);
-		Y = max(0, Y);
-		X = min(width, X);
-		Y = min(height, Y);
+	std::wstring gameType = game_webkit->RunJS(_T("getGameType();"));
+	// 游戏的控制都在这里，通过判断游戏的type来执行不同的控制
+	if (gameType == RF_GAME_NAME_FRY_EGG) {
+		// 这个运动暂时设计为和擦窗户是一样的
+		double pos[2];
+		RFMainWindow::MainWindow->m_robot.CalculateRagPos(pos);
+
+		wchar_t xy[128];
+		wsprintf(xy, _T("(%d,%d);"), (int)pos[0], (int)pos[1]);
+		std::wstring rag_move = _T("selfmove");
+		rag_move += xy;
+		game_webkit->RunJS(rag_move);
+	} else if (gameType == RF_GAME_NAME_CLEAN_WINDOW) {
+		// 擦窗户
+		double pos[2];
+		RFMainWindow::MainWindow->m_robot.CalculateRagPos(pos);
+
+		wchar_t xy[128];
+		wsprintf(xy, _T("(%d,%d);"), (int)pos[0], (int)pos[1]);
+		std::wstring rag_move = _T("selfmove");
+		rag_move += xy;
+		game_webkit->RunJS(rag_move);
+
+	} else if (gameType == RF_GAME_NAME_PLANE_GAOJI) {
+		// 飞机大战
+		if (fire) {
+			game_webkit->RunJS(_T("fire();"));
+		}
+
+		// 直接去获取飞机的末端位置
+		double pos[2];
+		RFMainWindow::MainWindow->m_robot.GetPlanePos(0, 0, pos);
+		int X = pos[0];
+		int Y = pos[1];
 		wchar_t xy[128];
 		wsprintf(xy, _T("(%d,%d);"), X, Y);
 		std::wstring planeMove = _T("selfmove");
 		planeMove += xy;
-		game4->RunJS(planeMove);
+		game_webkit->RunJS(planeMove);
 	}
 
 	if (s_active_begin_recode) {		
@@ -6956,11 +6954,8 @@ void RFMainWindow::StartActiveGameDetect()
 
 	s_activeGameDetectTimer = ::SetTimer(NULL, 999, 200U, (TIMERPROC)OnActiveGameDetectTimer);
 
-	//std::wstring width = game4->RunJS(_T("getWidth();"));
-	//std::wstring height = game4->RunJS(_T("getHeight();"));
-	//int w = _wtoi(width.c_str());
-	//int h = _wtoi(height.c_str());
-	m_robotEvent.Start(800, 681);
+	// 开了另外一个线程根据肩部和肘部的角度去计算飞机应该在的位置，现在我们直接停掉这个功能
+	//m_robotEvent.Start(800, 681);
 }
 
 void RFMainWindow::StopActiveGameDetect()

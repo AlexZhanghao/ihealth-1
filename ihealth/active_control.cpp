@@ -27,8 +27,9 @@ const char *FCH = "Dev2/ai6";//握力采集通道
 
 static const int kPlaneMaxX = 734;
 static const int kPlaneMaxY = 601;
-static const double kShoulderAngleMax = 40;
-static const double kElbowAngleMax = 40;
+
+static const int kRagMaxX = 710;
+static const int kRagMaxY = 596;
 
 extern Vector3d AxisDirection[5] {
 	Vector3d(0, 0, 0),
@@ -113,6 +114,9 @@ void ActiveControl::LoadParamFromFile() {
 	// cycle_time_in_second
 	cycle_time_in_second_ = cfg.get<double>("cycle_time_in_second");
 	
+	// shoulder and elbow range
+	shoulder_angle_max_ = cfg.get<int>("shoulder_angle_max");
+	elbow_angle_max_ = cfg.get<int>("elbow_angle_max");
 }
 
 ActiveControl:: ~ActiveControl() {
@@ -316,10 +320,6 @@ void ActiveControl::FiltedVolt2Vel(double FiltedData[6]) {
 	Ud_Shoul = Vel(0, 0);
 	Ud_Arm = Vel(1, 0);
 
-
-	char message_tracing[1024];
-	sprintf(message_tracing, "ActiveControl, Ud_Shoul is %0.2f,Ud_Arm is %0.2f", Ud_Shoul, Ud_Arm);
-	LOG1(message_tracing);
 	if ((Ud_Arm > -0.5) && (Ud_Arm < 0.5))
 	{
 		Ud_Arm = 0;
@@ -372,8 +372,8 @@ void ActiveControl::CalculatePlaneXY(short rangeX, short rangeY, double XY[2]) {
 	double angle[2] = { 0 };
 	ControlCard::GetInstance().GetEncoderData(angle);
 
-	int x = (angle[0] / kShoulderAngleMax) * kPlaneMaxX;
-	int y = (angle[1] / kElbowAngleMax) * kPlaneMaxY;
+	int x = (angle[0] / shoulder_angle_max_) * kPlaneMaxX;
+	int y = (angle[1] / elbow_angle_max_) * kPlaneMaxY;
 
 	if (y < 0) {
 		y = 0;
@@ -402,6 +402,30 @@ void ActiveControl::CalculatePlaneXY(short rangeX, short rangeY, double XY[2]) {
 	y = std::max<double>(std::min<double>(y, 0.3), 0);
 	XY[0] = (x / 0.3)*rangeX;
 	XY[1] =(1 - 0.3 * y / 0.3)*rangeY;*/
+}
+
+void ActiveControl::CalculateRagXY(double XY[2]) {
+	double angle[2] = { 0 };
+	ControlCard::GetInstance().GetEncoderData(angle);
+
+	// 根据比例得到抹布位置
+	int x = (angle[0] / shoulder_angle_max_) * kRagMaxX;
+	int y = (angle[1] / elbow_angle_max_) * kRagMaxY;
+
+	if (y < 0) {
+		y = 0;
+	} else if (y > kRagMaxY) {
+		y = kRagMaxY;
+	}
+
+	if (x < 0) {
+		x = 0;
+	} else if (x > kRagMaxX) {
+		x = kRagMaxX;
+	}
+
+	XY[0] = kRagMaxX - x;
+	XY[1] = kRagMaxY - y;
 }
 
 void ActiveControl::SetDamping(float FC)

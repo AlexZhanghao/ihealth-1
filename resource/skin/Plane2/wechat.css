@@ -1,7 +1,7 @@
 
 /*这个body是还没有start游戏时候的封面*/
 body{
-    background: url("image/game_bg.png");
+    background: url("image/timg.png");
 }
 *{
     margin: 0px;
@@ -9,7 +9,7 @@ body{
 }
 #contentdiv{
     width: 100%;
-    height: 650px;
+    height: 100%;
 
 }
 /*
@@ -36,9 +36,9 @@ body{
 /*这就是我们打飞机的主页面*/
 #maindiv{
     width: 100%;
-    height:681px;
+    height:100%;
     position: absolute;
-    background: url(image/game_cloud.png);
+    background: url("image/timg.png");
     background-size: 100%;
     display: none;
     overflow: hidden;
