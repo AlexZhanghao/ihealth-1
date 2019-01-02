@@ -129,6 +129,10 @@ void Robot::GetPlanePos(short w, short h, double XY[2]) {
 	activeCtrl->CalculatePlaneXY(w, h, XY);
 }
 
+void Robot::CalculateRagPos(double XY[2]) {
+	activeCtrl->CalculateRagXY(XY);
+}
+
 void Robot::SetDamping(float FC/* =0.1 */) {
 	activeCtrl->SetDamping(FC);
 }

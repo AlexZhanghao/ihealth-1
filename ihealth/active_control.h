@@ -16,6 +16,8 @@ public:
 	bool IsFire();
 	//获取机器人末端位置
 	void CalculatePlaneXY(short Axis_X, short Axis_Y, double XY[2]);
+	// 擦窗户游戏中获取抹布位置
+	void CalculateRagXY(double XY[2]);
 	void SetDamping(float FC=0.1);
 
 private:
@@ -39,6 +41,9 @@ private:
 	Matrix3d rotate_matrix_;
 	//手柄坐标系下手柄坐标系原点到六维力坐标系原点的向量
 	Vector3d force_position_;
+
+	int shoulder_angle_max_;
+	int elbow_angle_max_;
 };
 
 #endif // ACTIVECONTROL_H

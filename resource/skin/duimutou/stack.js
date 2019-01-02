@@ -1,24 +1,5 @@
-﻿window.timesend = 200;      
-    window.Checkpoint1 = function (){
-        timesend = 200
-    }
-    window.Checkpoint2 = function (){
-        timesend = 100
-    }
-    window.Checkpoint3 = function  (){
-        timesend = 50
-    };
-	
-window.setgameover=2
-window.getGameOver = function (){
-    return window.setgameover
-};
-window.setStart = 0;
-window.getStartGame = function (){
-    return window.setStart
-}
-
-var logh=20;
+                                                                                
+ var logh=20;
  extraleft=new Array();
  extraleft[1]=6;
  extraleft[2]=4;
@@ -42,7 +23,7 @@ var logh=20;
  var paddingtarget=0,paddingnow=0;
  var gameisover=1;
  var dnd=0;
- var dclick1 = 0
+
  function firstinit() {
   document.body.addEventListener("touchmove", function(e) {
           e.preventDefault();
@@ -66,16 +47,21 @@ var logh=20;
   tmp=document.createElement('div');
   tmp.style.position='absolute';
   tmp.style.cursor='pointer';
-    window.fire = function(){
-        dclick1++;
-        if(dclick1>1) {
-            window.setgameover = 0;
-            window.setStart = 1;
-            handleclick();
-        }
-    }
-
-
+  if(typeof(tmp.ontouchstart) !== 'undefined') {
+	  tmp.ontouchstart=handleclick;
+  } else {
+  	tmp.onmousedown=handleclick;
+  	tmp.onclick = function() {return false;}
+  }
+  tmp.style.backgroundImage='url(i/stackthelog.png)';
+tmp.style.backgroundPosition='center center';
+tmp.style.backgroundRepeat='no-repeat';
+  tmp.style.width='298px';
+  tmp.style.height='55px';
+tmp.style.padding='17px 11px 0 11px';
+  tmp.style.zIndex='30';
+  tmp.style.margin='243px 0 0 0';
+  $('st_outerarea').appendChild(tmp);
 
   tmp=document.createElement('div')
   tmp.id='st_scrollarea';
@@ -119,7 +105,6 @@ var logh=20;
  }
 
 function stack_init() {
-
  if(sts>10) {
   paddingtarget=(sts-10)*(logh-4);
   if(sts > 15) {
@@ -146,23 +131,9 @@ function stack_init() {
  tmp.style.marginLeft=stmargin[sts]-extraleft[sttype[sts]]+7+'px';
  $('st_scrollarea').appendChild(tmp);
  showaronk('stp_'+sts,sttype[sts],ststart[sts],stwidth[sts]);
-
-al=setInterval('stack_dothemove()',window.timesend);
+ stinterval=setInterval('stack_dothemove()',50);
 }
- window.getNandu = function(){
-     if(window.timesend==200){
-         return '高'
-     }
-     if(window.timesend==100){
-         return '中'
-     }
-     if(window.timesend==50){
-         return '低'
-     }
- }
- function getScore (){
-        return stscore
- }
+
 function stack_dothemove() {
   //if($('score').innerHTML < stscore) {
   // $('score').innerHTML=Math.floor((parseInt($('score').innerHTML)+stscore*3)/4);
@@ -310,7 +281,6 @@ function showaronk(srid,srtype,srstart,srsize) {
 }
 
 function gameover() {
- window.setgameover = 1;
  gameisover=1;
  gamesplayed++;
  setCookie('stack_gamesplayed',gamesplayed);
@@ -360,21 +330,61 @@ function resumegame() {
  }
 }
 
-function getGameType(){
-    return '堆木头'
-}
+
 
 
 
 //xinli001
 
+var tit="0";
+tit=stscore;
+var tite="";
+	var DFW = {
+		appId: "",
+		TLImg: "http://www.wenzhangku.com/weixin/duimutou/i/icon.png",
+		url: "http://www.wenzhangku.com/weixin/duimutou/",
+		title: "堆木头，简单的不得了，好玩的停不下",
+		desc: "玩法简单，但是玩的是技巧，反应，没有最高只有更高，来挑战下"
+	};
+	var onBridgeReady = function(){
+		WeixinJSBridge.on('menu:share:appmessage', function(argv){
+			if(tit>500){tite=DFW.title + " 我的分数是"+tit+"分，求超越！";}else{tite=DFW.title;};
+			WeixinJSBridge.invoke('sendAppMessage', {
+				"appid": DFW.appId,
+				"img_url": DFW.TLImg,
+				"img_width": "120",
+				"img_height": "120",
+				"link": DFW.url ,
+				"title": tite ,
+				"desc": DFW.desc 
+			});
+		});
+		WeixinJSBridge.on('menu:share:timeline', function(argv){
+			if(tit>500){tite=DFW.title + " 我的分数是"+tit+"分，求超越！";}else{tite=DFW.title;};
+			WeixinJSBridge.invoke('shareTimeline', {
+				"appid": DFW.appId,
+				"img_url":DFW.TLImg,
+				"img_width": "120",
+				"img_height": "120",
+				"link": DFW.url ,
+				"title": tite ,
+				"desc": DFW.desc
+			});
+		});
+	};
+	if(document.addEventListener){
+		document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+	}else if(document.attachEvent){
+		document.attachEvent('WeixinJSBridgeReady', onBridgeReady);
+		document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+	}
 
 //xinli   
 /*
 updateShare(stscore);
 function updateShare(stscore) {
-	imgUrl = 'http://games.vdcom.cn/games/duimutou/i/icon.png';
-	lineLink = 'http://games.vdcom.cn/games/duimutou';
+	imgUrl = 'http://www.wenzhangku.com/weixin/duimutou/i/icon.png';
+	lineLink = 'http://www.wenzhangku.com/weixin/duimutou';
 	descContent = "玩法简单，但是玩的是技巧，反应，没有最高只有更高，来挑战下！";
 	updateShareScore(stscore);
 	appid = '';
@@ -389,4 +399,3 @@ function updateShareScore(stscore) {
 	}
 }*/
 //xinli001
-//alert(window.getNandu())

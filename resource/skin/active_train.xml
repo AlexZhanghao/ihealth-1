@@ -23,15 +23,15 @@
 				<Control />
 				<HorizontalLayout height="309">
 					<Control />
-					<Button width="540" name="zhudong_game1" normalimage="zhudong_game1.png" hotimage="zhudong_game1.png" pushedimage="zhudong_game1.png"/>
+					<Button width="540" name="active_game_plane_battle" normalimage="zhudong_game1.png" hotimage="zhudong_game1.png" pushedimage="zhudong_game1.png"/>
 					<Control />
-					<Button width="540" name="zhudong_game2"  normalimage="zhudong_game2v.png" hotimage="zhudong_game2v.png" pushedimage="zhudong_game2v.png"/>
+					<Button width="540" name="active_game_clean_window"  normalimage="game_clean_window.png" hotimage="game_clean_window.png" pushedimage="game_clean_window.png"/>
 					<Control />
 				</HorizontalLayout>
 				<Control />
 				<HorizontalLayout height="309">
 					<Control width="40"/>
-					<Button width="540" name="zhudong_game3"  normalimage="zhudong_game3v.png" hotimage="zhudong_game3v.png" pushedimage="zhudong_game3v.png"/>
+					<Button width="540" name="active_game_fry_egg"  normalimage="game_fry_egg.png" hotimage="game_fry_egg.png" pushedimage="game_fry_egg.png"/>
 				</HorizontalLayout>
 				<Control />
 			</VerticalLayout>

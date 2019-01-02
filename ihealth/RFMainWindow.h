@@ -17,8 +17,8 @@
 #define RF_GAME_NAME_PLANE_CHUJI _T("飞机大战初级")
 #define RF_GAME_NAME_PLANE_ZHONGJI _T("飞机大战中级")
 #define RF_GAME_NAME_PLANE_GAOJI _T("飞机大战高级")
-#define RF_GAME_NAME_BIAOQIANG _T("标枪")
-#define RF_GAME_NAME_DUIMUTOU _T("堆木头")
+#define RF_GAME_NAME_CLEAN_WINDOW _T("擦窗户")
+#define RF_GAME_NAME_FRY_EGG _T("煎鸡蛋")
 
 #define RF_DESIGN_WINDOW_WIDTH 1200
 #define RF_DESIGN_WINDOW_HEIGHT 675
@@ -196,9 +196,12 @@ public:
 	
 	bool		OnEMGModeStart(void *pParam);
 	bool		OnEMGModeRecovery(void *pParam);
-	bool		OnZhudongFeiji(void *pParam);	
-	bool		OnZhudongBiaoqiang(void *pParam);
-	bool		OnZhudongDuimutou(void *pParam);
+	// 进入打飞机游戏页面
+	bool		OnActiveGamePlaneBattle(void *pParam);
+	// 进入擦玻璃游戏页面
+	bool		OnActiveGameCleanWindow(void *pParam);
+	// 进入堆木头游戏页面
+	bool		OnActiveGameFryEgg(void *pParam);
 	bool		OnGame4(void *pParam);
 	bool		OnGame3(void *pParam);
 	bool		OnGame2(void *pParam);
@@ -231,7 +234,8 @@ public:
 	void		ShowEyeModeTrainPage();
 	void		ShowEmgModeTrainPage();
 	void		ShowTrainDataChartPage(int id);
-	void		ShowGame4();
+	// 展示游戏页面，注意，所有的游戏都是在这个页面进行的。
+	void		ShowActiveGameWebkit();
 	void		ShowEvaluationPage();
 	void		ShowEvaluationHistoryPage();
 	void		ShowEvaluationAddPage();
