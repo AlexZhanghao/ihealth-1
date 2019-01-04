@@ -3199,7 +3199,19 @@ bool RFMainWindow::OnGame4Start(void *pParam)
 		m_robot.ActiveStartMove();
 
 		// 主动开始时播放游戏背景音，播放完后自动循环
-		voice_path = CPaintManagerUI::GetResourcePath() + _T("voice/active_game_plane_bg.wav");
+		// 首先判断游戏的type，根据不同的游戏type播放不一样的背景音乐
+		std::wstring bg_name;
+		CWkeWebkitUI *game_webkit = static_cast<CWkeWebkitUI *>(RFMainWindow::MainWindow->m_pm.FindControl(_T("game4")));
+		std::wstring game_type = game_webkit->RunJS(_T("getGameType()"));
+		if (game_type == RF_GAME_NAME_PLANE_GAOJI) {
+			bg_name = _T("voice/active_game_plane_battle_bg.wav");
+		} else if (game_type == RF_GAME_NAME_CLEAN_WINDOW) {
+			bg_name = _T("voice/active_game_clean_window_bg.wav");
+		} else if (game_type == RF_GAME_NAME_FRY_EGG) {
+			bg_name = _T("voice/active_game_fry_egg_bg.wav");
+		}
+
+		voice_path = std::wstring(CPaintManagerUI::GetResourcePath().GetData()) + bg_name;
 		if (!voice_path.empty() && _waccess(voice_path.c_str(), 0) != -1) {
 			sndPlaySound(voice_path.c_str(), SND_LOOP | SND_ASYNC);
 		}
