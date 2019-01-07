@@ -202,7 +202,7 @@ void RFMainWindow::BindManagerPatientPageEvent()
 	personor_info_return->OnNotify += MakeDelegate(this, &RFMainWindow::OnReturnMainPage);
 
 	CButtonUI* info_return = static_cast<CButtonUI*>(m_pm.FindControl(_T("systemset_info_return")));
-	info_return->OnNotify += MakeDelegate(this, &RFMainWindow::OnReturnMainPage);
+	info_return->OnNotify += MakeDelegate(this, &RFMainWindow::OnSystemSetReturn);
 
 	CButtonUI* prevpage = static_cast<CButtonUI*>(m_pm.FindControl(_T("manage_last_page")));
 	prevpage->OnNotify += MakeDelegate(this, &RFMainWindow::OnManagerPrevPage);
@@ -561,7 +561,7 @@ LRESULT RFMainWindow::OnAppClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	bHandled = FALSE;
 	POINT pt; pt.x = GET_X_LPARAM(lParam); pt.y = GET_Y_LPARAM(lParam);
 
-
+	// 通过比对点击的控件的名字来判断是不是选择患者的页面
 	CControlUI* pControl = static_cast<CControlUI*>(m_pm.FindControl(pt));
 	if (pControl && _tcsncmp(pControl->GetName(), _T("cell"), 4) == 0) {
 		std::string name = TGUTF16ToUTF8((std::wstring)pControl->GetName());
@@ -1114,6 +1114,12 @@ LRESULT RFMainWindow::OnMenuClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	}
 
 	if (*name == _T("menu_set_system")) {
+		// 如果没有选患者的话要先选患者
+		if (m_current_patient.id < 0) {
+			RFSelectPatientDialog(GetHWND());
+			return 1;
+		}
+
 		ShowSetSystemPage();
 	}
 	
@@ -2525,6 +2531,16 @@ bool RFMainWindow::OnActiveTrain(void *pParam)
 	CLabelUI* pLabel = static_cast<CLabelUI*>(m_pm.FindControl(_T("active_train_page_welcom")));
 	pLabel->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
 
+	// 检查SAA_ROM和SFE_ROM，如果没有设置的话，弹出message box提示设置
+	if (RFMainWindow::MainWindow->m_current_patient.SAA_ROM < 0.1 || RFMainWindow::MainWindow->m_current_patient.SFE_ROM < 0.1) {
+		MessageBox(NULL, _T("该患者还未设置关节运动范围，请到系统设置页面进行设置"), _T("未设置关节运动范围"), MB_OK);
+		return true;
+	}
+
+	// 根据SAA_ROM和SFE_ROM决定游戏运动的范围
+	RFMainWindow::MainWindow->m_robot.activeCtrl->SetSAAMax(RFMainWindow::MainWindow->m_current_patient.SAA_ROM);
+	RFMainWindow::MainWindow->m_robot.activeCtrl->SetSFEMax(RFMainWindow::MainWindow->m_current_patient.SFE_ROM);
+
 	ShowActiveTrainPage();
 	return true;
 }
@@ -3439,6 +3455,37 @@ bool RFMainWindow::OnReturnMainPage(void* pParam)
 
 	ShowMainPage();
 	return true;
+}
+
+bool RFMainWindow::OnSystemSetReturn(void *pParam) {
+	// 获取saa_edit里面的值
+	CEditUI* saa_edit = static_cast<CEditUI*>(m_pm.FindControl(_T("saa_rom_edit")));
+	CDuiString text = saa_edit->GetText();
+	double saa = _wtof(text);
+
+	// 获取sfe_edit里面的值
+	CEditUI* sfe_edit = static_cast<CEditUI*>(m_pm.FindControl(_T("sfe_rom_edit")));
+	text = sfe_edit->GetText();
+	double sfe = _wtof(text);
+
+	// 检查值是否合法
+	if (saa < 0.1 || sfe < 0.1) {
+		MessageBox(NULL, _T("肩部运动范围需要大于0.1"), _T("肩部运动范围设置有误"), MB_OK);
+		return 0;
+	}
+
+	// 改变当前patient的saa_rom和sfe_rom
+	char sql[128];
+	sprintf(sql, "UPDATE patient SET SAA_ROM=%f, SFE_ROM=%f where id=%d", saa, sfe, RFMainWindow::MainWindow->m_current_patient.id);
+	RFMYSQLStmt stmt;
+	if (stmt.Prepare(RFMainWindow::DBThread->m_db, sql) > 0) {
+		stmt.Finalize();
+	}
+	RFMainWindow::MainWindow->m_current_patient.SAA_ROM = saa;
+	RFMainWindow::MainWindow->m_current_patient.SFE_ROM = sfe;
+
+
+	return OnReturnMainPage(pParam);
 }
 
 bool RFMainWindow::OnEVLastPage(void* pParam)
@@ -4712,6 +4759,27 @@ void RFMainWindow::ShowSetSystemPage()
 
 	CLabelUI* pWelecome = static_cast<CLabelUI*>(m_pm.FindControl(_T("systemset_welcom")));
 	pWelecome->SetText((_T("欢迎您，") + m_login_info.login_user + _T("!∨")).c_str());
+
+	// 根据patient id得到最新的SAA_ROM和SFE_ROM
+	char sql[1024] = "";
+	sprintf(sql, "select saa_rom, sfe_rom from patient where id=%d and flag=0", m_current_patient.id);
+	RFMYSQLStmt stmt;
+	if (stmt.Prepare(RFMainWindow::DBThread->m_db, sql) > 0) {
+		if (stmt.Step() > 0) {
+			m_current_patient.SAA_ROM = stmt.GetDouble(0);
+			m_current_patient.SFE_ROM = stmt.GetDouble(1);
+		}
+	}
+	stmt.Finalize();
+
+	// 找到SAA和SFE对应的Edit
+	CEditUI *saa_edit = static_cast<CEditUI *>(m_pm.FindControl(_T("saa_rom_edit")));
+	std::wstring saa = std::to_wstring(RFMainWindow::MainWindow->m_current_patient.SAA_ROM);
+	saa_edit->SetText(saa.c_str());
+	CEditUI *sfe_edit = static_cast<CEditUI *>(m_pm.FindControl(_T("sfe_rom_edit")));
+	std::wstring sfe = std::to_wstring(RFMainWindow::MainWindow->m_current_patient.SFE_ROM);
+	sfe_edit->SetText(sfe.c_str());
+
 
 	UpdatePersonInfo();
 }

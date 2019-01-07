@@ -14,11 +14,14 @@ public:
 	// 采集一次六维力的数据，计算出电机速度，然后指示电机以这个速度运动.这是一轮循环
 	void Step();
 	bool IsFire();
-	//获取机器人末端位置
+	// 获取机器人末端位置
 	void CalculatePlaneXY(short Axis_X, short Axis_Y, double XY[2]);
 	// 擦窗户游戏中获取抹布位置
 	void CalculateRagXY(double XY[2]);
 	void SetDamping(float FC=0.1);
+	// 设置关节运动范围
+	void SetSAAMax(double saa);
+	void SetSFEMax(double sfe);
 
 private:
 	void MoveInNewThread();
@@ -42,8 +45,8 @@ private:
 	//手柄坐标系下手柄坐标系原点到六维力坐标系原点的向量
 	Vector3d force_position_;
 
-	int shoulder_angle_max_;
-	int elbow_angle_max_;
+	double shoulder_angle_max_;
+	double elbow_angle_max_;
 };
 
 #endif // ACTIVECONTROL_H

@@ -108,6 +108,8 @@ struct PatientInfo
 	std::wstring recoverdetail;
 	std::wstring remarks;
 	int flag;
+	double SAA_ROM; // 肩部的外展内收运动范围的最大值（对应肩部角度）
+	double SFE_ROM; // 肩部的屈伸运动范围最大值（对应肘部角度）
 };
 
 struct LoadPatientResult

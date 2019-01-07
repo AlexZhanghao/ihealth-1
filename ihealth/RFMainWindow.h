@@ -37,6 +37,7 @@ public:
 	void OnFinalMessage(HWND /*hWnd*/);
 	CControlUI* CreateControl(LPCTSTR pstrClass);
 
+	// 初始化函数，主要进行UI和数据库的初始化
 	void Init();
 	void Closing();
 	void OnPrepare();
@@ -46,6 +47,7 @@ public:
 	void BindManagerPatientPageEvent();
 
 	LRESULT OnCommunicate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	// 点击鼠标左键的响应函数，在这里处理了选择患者的功能
 	LRESULT OnAppClick(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnDuiCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -102,6 +104,8 @@ public:
 	bool		OnPage4(void *pParam);
 	bool		OnNextPage(void *pParam);
 	bool		OnReturnMainPage(void *pParam);
+	// 从系统设置返回的响应函数
+	bool		OnSystemSetReturn(void *pParam);
 	bool		OnSearch(void *pParam);
 	
 	bool		OnEVLastPage(void* pParam);
@@ -228,6 +232,7 @@ public:
 	void		ShowPatientAdd(std::wstring patientid);
 	void		ShowAboutPage();
 	void		ShowPersonorPage();
+	// 将页面转到系统设置页面
 	void		ShowSetSystemPage();
 	void		ShowPatientTrainInformation();
 	void		ShowPatientTrainDetail(std::wstring patientid);

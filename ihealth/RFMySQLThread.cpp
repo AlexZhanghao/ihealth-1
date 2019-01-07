@@ -262,7 +262,7 @@ int RFMySQLThread::SearchPatient(EventArg* pArg)
 
 	LoadPatientResult* pResult = new LoadPatientResult;
 	char sql[1024] = "";
-	char fields[128] = "id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag";
+	char fields[128] = "id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag,saa_rom,sfe_rom";
 	sprintf(sql, "select %s from patient where name='%s' and flag=0",fields, TGUTF16ToUTF8(pParam->patientname).c_str());
 
 	RFMYSQLStmt stmt;
@@ -281,6 +281,8 @@ int RFMySQLThread::SearchPatient(EventArg* pArg)
 			patient.totaltreattime = TGUTF8ToUTF16(stmt.GetString(8));
 			patient.recoverdetail = TGUTF8ToUTF16(stmt.GetString(9));
 			patient.remarks = TGUTF8ToUTF16(stmt.GetString(10));
+			patient.SAA_ROM = stmt.GetDouble(11);
+			patient.SFE_ROM = stmt.GetDouble(12);
 
 			pResult->patients.push_back(patient);
 		}
@@ -335,7 +337,7 @@ int RFMySQLThread::FilterPatient(EventArg* pArg)
 		condition += " and createtime<='" + TGUTF16ToUTF8(pParam->create_to) + "'";
 	}
 	
-	std::string fields = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag from patient where flag=0";
+	std::string fields = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag,saa_rom,sfe_rom from patient where flag=0";
 	char condition1[1024];
 	sprintf(condition1, " and hospitalid=%d and doctorid=%d and flag=0 ", pParam->hospitalid, pParam->doctorid);
 	std::string sql = "";
@@ -360,6 +362,8 @@ int RFMySQLThread::FilterPatient(EventArg* pArg)
 			patient.totaltreattime = TGUTF8ToUTF16(stmt.GetString(8));
 			patient.recoverdetail = TGUTF8ToUTF16(stmt.GetString(9));
 			patient.remarks = TGUTF8ToUTF16(stmt.GetString(10));
+			patient.SAA_ROM = stmt.GetDouble(11);
+			patient.SFE_ROM = stmt.GetDouble(12);
 
 			pResult->patients.push_back(patient);
 		}
@@ -422,7 +426,7 @@ int RFMySQLThread::ExportPatient(EventArg* pArg)
 	}
 	
 
-	std::string fields = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag from patient where flag=0";
+	std::string fields = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag,saa_rom,sfe_rom from patient where flag=0";
 	char condition1[1024];
 	sprintf(condition1, " and hospitalid=%d and doctorid=%d and flag=0 ", pParam->hospitalid, pParam->doctorid);
 	std::string sql = "";
@@ -448,6 +452,8 @@ int RFMySQLThread::ExportPatient(EventArg* pArg)
 			patient.totaltreattime = TGUTF8ToUTF16(stmt.GetString(8));
 			patient.recoverdetail = TGUTF8ToUTF16(stmt.GetString(9));
 			patient.remarks = TGUTF8ToUTF16(stmt.GetString(10));
+			patient.SAA_ROM = stmt.GetDouble(11);
+			patient.SFE_ROM = stmt.GetDouble(12);
 
 			pResult->patients.push_back(patient);
 		}
@@ -503,7 +509,7 @@ int RFMySQLThread::Load(EventArg* pArg)
 	}
 
 	//char sql[1024] = "";
-	char fields[256] = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag from patient where ";
+	char fields[256] = "select id,hospitalid,doctorid,name,sex,age,createtime,lasttreattime,totaltreattime,recoverdetail,remarks,flag,saa_rom,sfe_rom from patient where ";
 	char condition1[1024];
 	sprintf(condition1, " hospitalid=%d and doctorid=%d and flag=0 ", pParam->hospitalid, pParam->doctorid);
 	char limit[128];
@@ -537,6 +543,8 @@ int RFMySQLThread::Load(EventArg* pArg)
 			patient.recoverdetail = TGUTF8ToUTF16(stmt.GetString(9));
 			patient.remarks = TGUTF8ToUTF16(stmt.GetString(10));
 			patient.flag = 0;
+			patient.SAA_ROM = stmt.GetDouble(11);
+			patient.SFE_ROM = stmt.GetDouble(12);
 
 			patients.push_back(patient);
 		}

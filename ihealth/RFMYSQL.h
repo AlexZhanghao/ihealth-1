@@ -39,6 +39,7 @@ public:
 
 	int GetInt(int index);
 	std::string GetString(int index);
+	double GetDouble(int index);
 
 	MYSQL_RES* _res;
 	MYSQL_ROW _row;

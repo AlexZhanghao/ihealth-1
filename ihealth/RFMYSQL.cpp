@@ -166,3 +166,11 @@ std::string RFMYSQLStmt::GetString(int index)
 
 	return _row[index];
 }
+
+double RFMYSQLStmt::GetDouble(int index) {
+	if (!_res) {
+		return -1;
+	}
+
+	return atof(_row[index]);
+}

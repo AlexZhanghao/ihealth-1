@@ -115,8 +115,8 @@ void ActiveControl::LoadParamFromFile() {
 	cycle_time_in_second_ = cfg.get<double>("cycle_time_in_second");
 	
 	// shoulder and elbow range
-	shoulder_angle_max_ = cfg.get<int>("shoulder_angle_max");
-	elbow_angle_max_ = cfg.get<int>("elbow_angle_max");
+	shoulder_angle_max_ = cfg.get<double>("shoulder_angle_max");
+	elbow_angle_max_ = cfg.get<double>("elbow_angle_max");
 }
 
 ActiveControl:: ~ActiveControl() {
@@ -431,4 +431,12 @@ void ActiveControl::CalculateRagXY(double XY[2]) {
 void ActiveControl::SetDamping(float FC)
 {
 	Force_Fc = FC;
+}
+
+void ActiveControl::SetSAAMax(double saa) {
+	shoulder_angle_max_ = saa;
+}
+
+void ActiveControl::SetSFEMax(double sfe) {
+	elbow_angle_max_ = sfe;
 }
