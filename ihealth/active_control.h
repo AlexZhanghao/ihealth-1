@@ -47,6 +47,7 @@ private:
 
 	double shoulder_angle_max_;
 	double elbow_angle_max_;
+
 };
 
 #endif // ACTIVECONTROL_H
