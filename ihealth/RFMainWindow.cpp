@@ -6835,7 +6835,7 @@ void OnActiveGameDetectTimer(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTim
 			wchar_t time[32];
 			int second = (active_timer / 1000) % 60;
 			int minute = (active_timer / 60000) % 60;
-			int hour = active_timer / 360000;
+			int hour = active_timer / 3600000;
 			std::wstring format = (_T("训练用时:"));
 			format += (hour < 10) ? _T("0%d:") : _T("%d:");
 			format += (minute < 10) ? _T("0%d:") : _T("%d:");
